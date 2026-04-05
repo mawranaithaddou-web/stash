@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "vintage-shop-35421"
+  },
+  "targets": {
+    "vintage-shop-35421": {
+      "hosting": {
+        "stash": [
+          "vintage-shop-35421"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

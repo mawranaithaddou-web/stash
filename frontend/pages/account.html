@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — Anon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body: ['"DM Sans"', 'sans-serif'],
+          },
+          colors: {
+            ink: { DEFAULT: '#0d0d0d', soft: '#1a1a1a', muted: '#6b7280' },
+            stone: { light: '#f5f5f4', mid: '#e7e5e4', dark: '#a8a29e' },
+            accent: { DEFAULT: '#c9a96e', light: '#f0e6d3', dark: '#a07840' },
+          },
+          animation: { 'fade-up': 'fadeUp .35s ease forwards' },
+          keyframes: { fadeUp: { from: { opacity: 0, transform: 'translateY(12px)' }, to: { opacity: 1, transform: 'none' } } },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'DM Serif Display', serif; }
+    ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:#d6d3d1; border-radius:99px; }
+    .nav-link::after { content:''; display:block; height:1px; background:currentColor; transform:scaleX(0); transition:transform .25s; transform-origin:left; }
+    .nav-link:hover::after { transform:scaleX(1); }
+    .mobile-nav-item.active { color: #c9a96e; }
+    @media (max-width: 1023px) { body { padding-bottom: 4.5rem; } }
+    .tab-panel { display:none; } .tab-panel.active { display:block; animation: fadeUp .35s ease; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  </style>
+</head>
+<body class="bg-stone-light min-h-screen text-ink font-body antialiased">
+
+<!-- TOAST -->
+<div id="app-toast" class="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium opacity-0 pointer-events-none max-w-xs" style="transition:all .3s">
+  <ion-icon id="toast-icon" name="checkmark-circle-outline" class="text-lg flex-shrink-0"></ion-icon>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- ═══════════════════ CART SIDEBAR ═══════════════════ -->
+<div id="cart-overlay-bg" class="fixed inset-0 z-[800] bg-ink/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+<aside id="cart-sidebar" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[850] flex flex-col translate-x-full shadow-2xl" style="transition:transform .35s cubic-bezier(.4,0,.2,1)">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-stone-mid">
+    <h2 class="font-display text-xl">Cart <span id="cart-count-badge" class="text-sm font-body font-normal text-ink/40">(0)</span></h2>
+    <button id="cart-close" class="text-ink/40 hover:text-ink transition-colors">
+      <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+    </button>
+  </div>
+  <div id="cart-body" class="flex-1 overflow-y-auto px-6 py-4 space-y-4"></div>
+  <div class="px-6 py-5 border-t border-stone-mid space-y-4">
+    <div class="flex justify-between items-center">
+      <span class="text-sm text-ink/60">Subtotal</span>
+      <span id="cart-subtotal" class="font-display text-xl">$0.00</span>
+    </div>
+    <p class="text-xs text-ink/40">Shipping &amp; taxes calculated at checkout</p>
+    <button id="checkout-btn" class="w-full bg-ink text-white py-4 rounded-xl text-sm font-medium hover:bg-ink/80 transition-colors flex items-center justify-center gap-2">
+      <ion-icon name="lock-closed-outline"></ion-icon> Proceed to Checkout
+    </button>
+    <a href="checkout.html" class="block text-center text-xs text-ink/50 hover:text-ink transition-colors">or Continue Shopping →</a>
+  </div>
+</aside>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="sticky top-0 z-[500] bg-white/95 backdrop-blur border-b border-stone-mid">
+  <!-- Promo strip -->
+  <div class="bg-ink text-white text-xs text-center py-2 font-light tracking-wide">
+    Free shipping on orders over $55 · <a href="shop.html" class="underline underline-offset-2 opacity-70 hover:opacity-100">Shop Now</a>
+  </div>
+  <!-- Main nav -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+    <a href="../index.html" class="font-display text-2xl tracking-tight flex-shrink-0">Anon</a>
+    <nav class="hidden lg:flex items-center gap-7 ml-4 flex-1">
+      <a href="../index.html" class="nav-link text-sm font-medium">Home</a>
+      <div class="relative group">
+        <button class="nav-link text-sm font-medium flex items-center gap-1">
+          Shop <ion-icon name="chevron-down-outline" class="text-xs mt-0.5"></ion-icon>
+        </button>
+        <div class="absolute top-full left-0 pt-4 hidden group-hover:block">
+          <div class="bg-white border border-stone-mid rounded-xl shadow-xl p-5 w-56 space-y-1">
+            <a href="shop.html" class="block px-3 py-2 text-sm rounded-lg hover:bg-stone-light transition-colors">All Products</a>
+            <div id="nav-categories" class="space-y-1"></div>
+          </div>
+        </div>
+      </div>
+      <a href="shop.html?sort=newest" class="nav-link text-sm font-medium">New In</a>
+      <a href="shop.html?featured=true" class="nav-link text-sm font-medium">Featured</a>
+      <a href="vendors.html" class="nav-link text-sm font-medium">Vendors</a>
+    </nav>
+    <!-- Search desktop -->
+    <div class="flex-1 max-w-xs hidden md:block">
+      <form id="search-form" class="relative">
+        <input id="search-input" type="search" placeholder="Search products…"
+          class="w-full pl-10 pr-4 py-2.5 bg-stone-light rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-all">
+        <ion-icon name="search-outline" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40 text-base"></ion-icon>
+      </form>
+    </div>
+    <!-- Actions -->
+    <div class="flex items-center gap-1 ml-auto">
+      <button id="login-btn-nav" class="hidden lg:flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full border border-stone-mid hover:border-ink transition-colors">
+        <ion-icon name="person-outline"></ion-icon> Log In
+      </button>
+      <div id="user-menu" class="hidden items-center gap-1">
+        <a id="nav-account-link" href="account.html" class="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-stone-light transition-colors text-sm font-medium">
+          <div class="w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center text-xs font-bold" id="user-avatar-init">A</div>
+          <span id="user-name-nav" class="hidden sm:block"></span>
+        </a>
+        <a id="nav-vendor-link" href="vendor-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Vendor Dashboard">
+          <ion-icon name="storefront-outline" class="text-lg"></ion-icon>
+        </a>
+        <a id="nav-admin-link" href="admin-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Admin">
+          <ion-icon name="settings-outline" class="text-lg"></ion-icon>
+        </a>
+        <a id="nav-delivery-link" href="delivery-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Delivery Dashboard">
+  <ion-icon name="bicycle-outline" class="text-lg"></ion-icon>
+</a>
+        <button id="logout-btn" class="p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Logout">
+          <ion-icon name="log-out-outline" class="text-lg"></ion-icon>
+        </button>
+      </div>
+      <a href="account.html#wishlist" class="p-2 rounded-full hover:bg-stone-light transition-colors">
+        <ion-icon name="heart-outline" class="text-lg text-ink/70"></ion-icon>
+      </a>
+      <button id="cart-btn" class="p-2 rounded-full hover:bg-stone-light transition-colors relative">
+        <ion-icon name="bag-handle-outline" class="text-lg text-ink/70"></ion-icon>
+        <span id="cart-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+      </button>
+      <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-full hover:bg-stone-light transition-colors">
+        <ion-icon name="menu-outline" class="text-xl"></ion-icon>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile dropdown -->
+  <div id="mobile-menu" class="lg:hidden hidden border-t border-stone-mid bg-white px-4 pb-4 space-y-1">
+    <a href="../index.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">Home</a>
+    <a href="shop.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">Shop</a>
+    <a href="vendors.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">Vendors</a>
+    <a href="account.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light bg-stone-light font-semibold">My Account</a>
+  </div>
+</header>
+
+<!-- ═══════════════════ MOBILE BOTTOM NAVBAR ═══════════════════ -->
+<nav id="mobile-bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 z-[600] bg-white/95 backdrop-blur border-t border-stone-mid" style="padding-bottom:env(safe-area-inset-bottom,0)">
+  <div class="flex items-center justify-around px-2 py-2">
+    <a href="../index.html" class="mobile-nav-item flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <ion-icon name="home-outline" class="text-xl"></ion-icon>
+      <span class="text-[10px] font-medium">Home</span>
+    </a>
+    <a href="shop.html" class="mobile-nav-item flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <ion-icon name="grid-outline" class="text-xl"></ion-icon>
+      <span class="text-[10px] font-medium">Shop</span>
+    </a>
+    <a href="account.html" class="mobile-nav-item active flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors" style="color:#c9a96e">
+      <ion-icon name="person-outline" class="text-xl"></ion-icon>
+      <span class="text-[10px] font-medium">Account</span>
+    </a>
+    <button id="mobile-cart-btn" class="mobile-nav-item relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <span class="relative">
+        <ion-icon name="bag-handle-outline" class="text-xl"></ion-icon>
+        <span id="mobile-cart-badge" class="absolute -top-1 -right-1.5 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center opacity-0">0</span>
+      </span>
+      <span class="text-[10px] font-medium">Cart</span>
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN LAYOUT -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+  <div class="grid lg:grid-cols-[280px_1fr] gap-8">
+
+    <!-- ── Sidebar ──────────────────────────────────────────────── -->
+    <aside class="space-y-4">
+      <!-- Profile card -->
+      <div class="bg-white rounded-2xl p-6 text-center border border-stone-mid/50">
+        <div class="w-20 h-20 rounded-full bg-ink text-white flex items-center justify-center text-3xl font-bold mx-auto mb-4" id="profile-avatar-big">A</div>
+        <h2 class="font-display text-xl" id="profile-name">Loading…</h2>
+        <p class="text-xs text-ink/50 mt-1" id="profile-email"></p>
+        <span class="inline-block mt-3 px-3 py-1 bg-stone-light rounded-full text-xs font-medium capitalize text-ink/60" id="profile-role"></span>
+        <a href="#" id="vendor-apply-link" class="hidden mt-4 w-full block text-center bg-accent text-white py-2.5 rounded-full text-sm font-medium hover:bg-accent/90 transition-colors">
+          Become a Vendor →
+        </a>
+      </div>
+
+      <!-- Nav -->
+      <nav class="bg-white rounded-2xl border border-stone-mid/50 overflow-hidden">
+        <button data-tab="overview" class="account-tab w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium hover:bg-stone-light transition-colors border-l-2 border-ink bg-stone-light/50">
+          <ion-icon name="grid-outline" class="text-base text-ink/60"></ion-icon> Overview
+        </button>
+        <button data-tab="orders" class="account-tab w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium hover:bg-stone-light transition-colors border-l-2 border-transparent text-ink/70">
+          <ion-icon name="receipt-outline" class="text-base text-ink/60"></ion-icon> My Orders
+        </button>
+        <button data-tab="wishlist" class="account-tab w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium hover:bg-stone-light transition-colors border-l-2 border-transparent text-ink/70">
+          <ion-icon name="heart-outline" class="text-base text-ink/60"></ion-icon> Wishlist
+        </button>
+        <button data-tab="profile" class="account-tab w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium hover:bg-stone-light transition-colors border-l-2 border-transparent text-ink/70">
+          <ion-icon name="person-outline" class="text-base text-ink/60"></ion-icon> Edit Profile
+        </button>
+        <button data-tab="security" class="account-tab w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium hover:bg-stone-light transition-colors border-l-2 border-transparent text-ink/70">
+          <ion-icon name="lock-closed-outline" class="text-base text-ink/60"></ion-icon> Security
+        </button>
+        <div class="border-t border-stone-mid/50 my-1"></div>
+        <a href="shop.html" class="w-full flex items-center gap-3 px-5 py-3.5 text-sm text-ink/60 hover:bg-stone-light hover:text-ink transition-colors">
+          <ion-icon name="bag-outline" class="text-base"></ion-icon> Continue Shopping
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ── Content Panels ────────────────────────────────────────── -->
+    <main class="min-w-0">
+
+      <!-- Overview panel -->
+      <div id="panel-overview" class="tab-panel active space-y-6">
+        <h1 class="font-display text-3xl">Good to see you <span id="overview-name" class="italic">back</span></h1>
+        <!-- Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl p-5 border border-stone-mid/50">
+            <ion-icon name="receipt-outline" class="text-2xl text-accent mb-3"></ion-icon>
+            <p class="font-display text-3xl" id="stat-orders">—</p>
+            <p class="text-xs text-ink/50 mt-1">Total Orders</p>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-stone-mid/50">
+            <ion-icon name="heart-outline" class="text-2xl text-accent mb-3"></ion-icon>
+            <p class="font-display text-3xl" id="stat-wishlist">—</p>
+            <p class="text-xs text-ink/50 mt-1">Wishlist Items</p>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-stone-mid/50">
+            <ion-icon name="cash-outline" class="text-2xl text-accent mb-3"></ion-icon>
+            <p class="font-display text-3xl" id="stat-spent">$0</p>
+            <p class="text-xs text-ink/50 mt-1">Total Spent</p>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-stone-mid/50">
+            <ion-icon name="star-outline" class="text-2xl text-accent mb-3"></ion-icon>
+            <p class="font-display text-3xl" id="stat-reviews">—</p>
+            <p class="text-xs text-ink/50 mt-1">Reviews Given</p>
+          </div>
+        </div>
+        <!-- Recent orders -->
+        <div class="bg-white rounded-2xl border border-stone-mid/50 overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-stone-mid/50">
+            <h2 class="font-medium">Recent Orders</h2>
+            <button onclick="switchTab('orders')" class="text-xs text-accent hover:underline">View all →</button>
+          </div>
+          <div id="overview-orders" class="divide-y divide-stone-mid/30">
+            <div class="px-6 py-10 text-center text-ink/30 text-sm">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders panel -->
+      <div id="panel-orders" class="tab-panel">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="font-display text-3xl">My Orders</h1>
+          <select id="order-filter" class="text-sm border border-stone-mid rounded-full px-4 py-2 focus:outline-none focus:border-ink/30 bg-white">
+            <option value="">All orders</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div id="orders-list" class="space-y-4">
+          <div class="bg-white rounded-2xl p-10 text-center text-ink/30 text-sm border border-stone-mid/50">Loading orders…</div>
+        </div>
+      </div>
+
+      <!-- Order Detail modal overlay -->
+      <div id="order-detail-modal" class="hidden fixed inset-0 z-[900] flex items-start justify-center overflow-y-auto p-4 sm:p-8 bg-ink/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl my-auto">
+          <div class="flex items-center justify-between px-6 py-5 border-b border-stone-mid">
+            <h2 class="font-display text-xl" id="order-modal-title">Order Details</h2>
+            <button onclick="closeOrderModal()" class="text-ink/40 hover:text-ink transition-colors"><ion-icon name="close-outline" class="text-2xl"></ion-icon></button>
+          </div>
+          <div id="order-modal-body" class="p-6"></div>
+        </div>
+      </div>
+
+      <!-- Wishlist panel -->
+      <div id="panel-wishlist" class="tab-panel">
+        <h1 class="font-display text-3xl mb-6">Wishlist</h1>
+        <div id="wishlist-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div class="col-span-full bg-white rounded-2xl p-10 text-center text-ink/30 text-sm border border-stone-mid/50">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Profile panel -->
+      <div id="panel-profile" class="tab-panel">
+        <h1 class="font-display text-3xl mb-6">Edit Profile</h1>
+        <div class="bg-white rounded-2xl border border-stone-mid/50 p-6 lg:p-8 max-w-xl">
+          <form id="profile-form" class="space-y-5">
+            <div>
+              <label class="block text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">Full Name</label>
+              <input type="text" id="pf-name" name="name" required
+                class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">Phone</label>
+              <input type="tel" id="pf-phone" name="phone" placeholder="+1 234 567 8900"
+                class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">Email <span class="normal-case text-ink/30">(read-only)</span></label>
+              <input type="email" id="pf-email" disabled
+                class="w-full px-4 py-3 bg-stone-mid/30 rounded-xl text-sm text-ink/40 cursor-not-allowed">
+            </div>
+            <hr class="border-stone-mid">
+            <p class="text-xs font-medium text-ink/50 uppercase tracking-wider">Shipping Address</p>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label class="block text-xs text-ink/50 mb-1.5">Street</label>
+                <input type="text" id="pf-street" name="street" placeholder="123 Main St"
+                  class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+              </div>
+              <div>
+                <label class="block text-xs text-ink/50 mb-1.5">City</label>
+                <input type="text" id="pf-city" name="city" placeholder="New York"
+                  class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+              </div>
+              <div>
+                <label class="block text-xs text-ink/50 mb-1.5">State</label>
+                <input type="text" id="pf-state" name="state" placeholder="NY"
+                  class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+              </div>
+              <div>
+                <label class="block text-xs text-ink/50 mb-1.5">ZIP</label>
+                <input type="text" id="pf-zip" name="zip" placeholder="10001"
+                  class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+              </div>
+              <div>
+                <label class="block text-xs text-ink/50 mb-1.5">Country</label>
+                <input type="text" id="pf-country" name="country" placeholder="United States"
+                  class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+              </div>
+            </div>
+            <button type="submit" id="pf-save-btn" class="bg-ink text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-ink/80 transition-colors">
+              Save Changes
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Security panel -->
+      <div id="panel-security" class="tab-panel">
+        <h1 class="font-display text-3xl mb-6">Security</h1>
+        <div class="bg-white rounded-2xl border border-stone-mid/50 p-6 lg:p-8 max-w-xl">
+          <h2 class="font-medium mb-5">Change Password</h2>
+          <form id="password-form" class="space-y-5">
+            <div>
+              <label class="block text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">Current Password</label>
+              <input type="password" id="pw-current" required placeholder="Your current password"
+                class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">New Password</label>
+              <input type="password" id="pw-new" required placeholder="Min 6 characters" minlength="6"
+                class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">Confirm New Password</label>
+              <input type="password" id="pw-confirm" required placeholder="Repeat new password"
+                class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+            </div>
+            <button type="submit" id="pw-save-btn" class="bg-ink text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-ink/80 transition-colors">
+              Update Password
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+/* ─── Toast ──────────────────────────────────────────────────── */
+function showToast(msg, type='success') {
+  const t=document.getElementById('app-toast'),icon=document.getElementById('toast-icon'),m=document.getElementById('toast-msg');
+  m.textContent=msg; const s={success:['bg-ink text-white','checkmark-circle-outline'],error:['bg-red-600 text-white','alert-circle-outline'],info:['bg-accent text-white','information-circle-outline']};
+  const[cls,ico]=s[type]||s.success; t.className=`fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium max-w-xs ${cls}`;
+  icon.name=ico; t.style.cssText='opacity:1;pointer-events:auto;transition:all .3s';
+  clearTimeout(t._t); t._t=setTimeout(()=>{t.style.cssText='opacity:0;pointer-events:none;transition:all .3s';},3200);
+}
+
+/* ─── Tab system ─────────────────────────────────────────────── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.account-tab').forEach(btn => {
+    const active = btn.dataset.tab === name;
+    btn.classList.toggle('border-ink', active);
+    btn.classList.toggle('border-transparent', !active);
+    btn.classList.toggle('bg-stone-light/50', active);
+    btn.classList.toggle('text-ink/70', !active);
+    btn.classList.toggle('font-semibold', active);
+  });
+  document.getElementById('panel-' + name)?.classList.add('active');
+  // Load data for tab
+  if (name === 'orders') loadOrders();
+  if (name === 'wishlist') loadWishlist();
+  if (name === 'profile') prefillProfile();
+  if (name === 'overview') loadOverviewOrders();
+}
+
+document.querySelectorAll('.account-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+/* ─── Guard ──────────────────────────────────────────────────── */
+function init() {
+  if (!Auth.isLoggedIn()) { window.location.href = '../index.html'; return; }
+  const user = Auth.getUser();
+  // Header
+  // Update top nav
+  const navAvatar = document.getElementById('user-avatar-init');
+  const navName = document.getElementById('user-name-nav');
+  if (navAvatar) navAvatar.textContent = user.name?.charAt(0)?.toUpperCase() || 'U';
+  if (navName) navName.textContent = user.name?.split(' ')[0];
+  document.getElementById('login-btn-nav')?.classList.add('hidden');
+  const um = document.getElementById('user-menu');
+  if (um) { um.classList.remove('hidden'); um.classList.add('flex'); }
+  document.getElementById('nav-vendor-link')?.classList.toggle('hidden', user.role !== 'vendor');
+  document.getElementById('nav-admin-link')?.classList.toggle('hidden', user.role !== 'admin');
+  // Sidebar card
+  document.getElementById('profile-avatar-big').textContent = user.name?.charAt(0)?.toUpperCase() || 'U';
+  document.getElementById('profile-name').textContent = user.name;
+  document.getElementById('profile-email').textContent = user.email;
+  document.getElementById('profile-role').textContent = user.role;
+  document.getElementById('overview-name').textContent = user.name?.split(' ')[0];
+  if (user.role === 'buyer') document.getElementById('vendor-apply-link').classList.remove('hidden');
+  if (user.role === 'vendor') {
+    document.getElementById('vendor-apply-link').textContent = '→ Vendor Dashboard';
+    document.getElementById('vendor-apply-link').href = 'vendor-dashboard.html';
+    document.getElementById('vendor-apply-link').classList.remove('hidden');
+  }
+  if (user.role === 'delivery') {
+    window.location.href = 'delivery-dashboard.html'; 
+    return; // Stop running the rest of the script
+  }
+  // Check URL hash for direct tab navigation
+  const hash = window.location.hash.replace('#','');
+  const validTabs = ['overview','orders','wishlist','profile','security'];
+  switchTab(validTabs.includes(hash) ? hash : 'overview');
+  loadOverviewStats();
+}
+
+/* ─── Overview stats ─────────────────────────────────────────── */
+async function loadOverviewStats() {
+  try {
+    const [ordersData, wishlistData] = await Promise.all([
+      Orders.myOrders({ limit: 100 }),
+      Users.wishlist(),
+    ]);
+    const orders = ordersData.orders || [];
+    document.getElementById('stat-orders').textContent = ordersData.total || 0;
+    document.getElementById('stat-wishlist').textContent = wishlistData.wishlist?.length || 0;
+    const spent = orders.filter(o => o.paymentStatus === 'paid').reduce((s,o) => s + o.totalAmount, 0);
+    document.getElementById('stat-spent').textContent = '$' + Math.round(spent);
+  } catch {}
+}
+
+async function loadOverviewOrders() {
+  const el = document.getElementById('overview-orders');
+  try {
+    const { orders } = await Orders.myOrders({ limit: 5 });
+    if (!orders?.length) { el.innerHTML = '<div class="px-6 py-10 text-center text-ink/30 text-sm">No orders yet. <a href="shop.html" class="text-accent hover:underline">Start shopping!</a></div>'; return; }
+    el.innerHTML = orders.map(o => orderRowHTML(o)).join('');
+  } catch { el.innerHTML = '<div class="px-6 py-8 text-center text-ink/30 text-sm">Failed to load orders</div>'; }
+}
+
+/* ─── Orders ─────────────────────────────────────────────────── */
+const statusColors = { pending:'bg-amber-50 text-amber-700', confirmed:'bg-blue-50 text-blue-700', processing:'bg-blue-50 text-blue-700', shipped:'bg-purple-50 text-purple-700', delivered:'bg-emerald-50 text-emerald-700', cancelled:'bg-red-50 text-red-600', paid:'bg-emerald-50 text-emerald-700', failed:'bg-red-50 text-red-600' };
+
+function orderRowHTML(o) {
+  const firstVo = o.vendorOrders?.[0];
+  const firstItem = firstVo?.items?.[0];
+  return `
+  <div class="px-5 sm:px-6 py-4 flex items-center gap-4 hover:bg-stone-light/50 transition-colors cursor-pointer" onclick="viewOrder('${o._id}')">
+    <div class="w-12 h-12 rounded-xl bg-stone-light overflow-hidden flex-shrink-0">
+      <img src="${firstItem?.thumbnail || 'https://placehold.co/48x48/f5f5f4/a8a29e?text=?'}" class="w-full h-full object-cover" alt="">
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-medium">${o.orderNumber}</p>
+      <p class="text-xs text-ink/50 truncate">${firstItem?.name || 'Order'} ${o.vendorOrders?.length > 1 ? `+${o.vendorOrders.reduce((s,vo)=>s+(vo.items?.length||0),0)-1} more` : ''}</p>
+    </div>
+    <div class="hidden sm:block text-right flex-shrink-0">
+      <p class="text-sm font-display">\$${Number(o.totalAmount).toFixed(2)}</p>
+      <p class="text-xs text-ink/40">${new Date(o.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>
+    </div>
+    <div class="flex-shrink-0">
+      <span class="text-xs px-2.5 py-1 rounded-full font-medium ${statusColors[o.status] || 'bg-stone-light text-ink/60'} capitalize">${o.status}</span>
+    </div>
+    <ion-icon name="chevron-forward-outline" class="text-ink/30 flex-shrink-0"></ion-icon>
+  </div>`;
+}
+
+async function loadOrders(status = '') {
+  const el = document.getElementById('orders-list');
+  el.innerHTML = '<div class="bg-white rounded-2xl p-10 text-center text-ink/30 text-sm border border-stone-mid/50">Loading…</div>';
+  try {
+    const params = status ? { status, limit: 20 } : { limit: 20 };
+    const { orders } = await Orders.myOrders(params);
+    if (!orders?.length) {
+      el.innerHTML = `<div class="bg-white rounded-2xl p-12 text-center border border-stone-mid/50">
+        <ion-icon name="receipt-outline" class="text-5xl text-ink/15 mb-4"></ion-icon>
+        <p class="text-sm text-ink/40">No orders found</p>
+        <a href="shop.html" class="inline-block mt-4 text-sm text-accent hover:underline">Browse products →</a>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div class="bg-white rounded-2xl border border-stone-mid/50 overflow-hidden divide-y divide-stone-mid/30">
+      ${orders.map(o => orderRowHTML(o)).join('')}
+    </div>`;
+  } catch(e) { el.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-red-500 text-sm border border-stone-mid/50">${e.message}</div>`; }
+}
+
+async function viewOrder(id) {
+  const modal = document.getElementById('order-detail-modal');
+  const body = document.getElementById('order-modal-body');
+  modal.classList.remove('hidden');
+  body.innerHTML = '<div class="text-center py-10 text-ink/30 text-sm">Loading…</div>';
+  try {
+    const { order } = await Orders.getOrder(id);
+    document.getElementById('order-modal-title').textContent = order.orderNumber;
+    body.innerHTML = `
+      <div class="space-y-5">
+        <!-- Status row -->
+        <div class="bg-stone-light rounded-xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <div>
+              <p class="text-[10px] uppercase tracking-widest font-bold text-ink/30 mb-1">Order Status</p>
+              <span class="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full ${statusColors[order.status]||'bg-stone-light text-ink/60'} capitalize">
+                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>${order.status}
+              </span>
+            </div>
+            <div class="ml-auto text-right">
+              <p class="text-[10px] uppercase tracking-widest font-bold text-ink/30 mb-1">Payment</p>
+              <span class="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full ${statusColors[order.paymentStatus]||'bg-stone-light text-ink/60'} capitalize">
+                ${order.paymentMethod === 'cod' ? '💵' : '💳'} ${order.paymentStatus}
+                ${order.paymentStatus === 'paid' && order.paymentMethod === 'cod' ? '<ion-icon name="checkmark-circle" class="text-emerald-500"></ion-icon>' : ''}
+              </span>
+            </div>
+          </div>
+          <div class="flex justify-between text-xs text-ink/40 pt-1 border-t border-stone-mid/40">
+            <span>Placed ${new Date(order.createdAt).toLocaleDateString('en-US',{dateStyle:'long'})}</span>
+            <span class="font-mono">${order.orderNumber}</span>
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="space-y-4">
+          ${order.vendorOrders?.map(vo => `
+            <div class="bg-stone-light rounded-xl p-4">
+              <p class="text-xs font-medium text-ink/50 uppercase tracking-wider mb-3">From ${vo.vendor?.storeName || 'Vendor'} · <span class="${statusColors[vo.status]||''} capitalize px-2 py-0.5 rounded-full text-[11px]">${vo.status}</span></p>
+              ${vo.items?.map(item=>`
+                <div class="flex items-center gap-3 py-2 border-b border-stone-mid/50 last:border-0">
+                  <img src="${item.thumbnail||''}" class="w-12 h-12 rounded-lg object-cover bg-stone-mid flex-shrink-0" alt="">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">${item.name}</p>
+                    ${item.variant?`<p class="text-xs text-ink/40">${item.variant}</p>`:''}
+                  </div>
+                  <p class="text-sm text-right flex-shrink-0">×${item.quantity}<br><span class="font-display">$${(item.price*item.quantity).toFixed(2)}</span></p>
+                </div>`).join('')}
+            </div>`).join('')}
+        </div>
+
+        <!-- Totals -->
+        <div class="bg-stone-light rounded-xl p-4 space-y-2">
+          <div class="flex justify-between text-sm"><span class="text-ink/60">Items</span><span>$${Number(order.itemsTotal).toFixed(2)}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-ink/60">Shipping</span><span>${order.shippingCost===0?'<span class="text-emerald-600 font-medium">FREE</span>':'$'+order.shippingCost.toFixed(2)}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-ink/60">Tax</span><span>$${Number(order.tax).toFixed(2)}</span></div>
+          <div class="flex justify-between font-medium pt-2 border-t border-stone-mid/50"><span>Total</span><span class="font-display text-lg">$${Number(order.totalAmount).toFixed(2)}</span></div>
+        </div>
+
+        <!-- Shipping address -->
+        <div class="bg-stone-light rounded-xl p-4">
+          <p class="text-xs font-medium text-ink/50 uppercase tracking-wider mb-2">Shipping To</p>
+          <p class="text-sm">${order.shippingAddress?.fullName}</p>
+          <p class="text-sm text-ink/60">${order.shippingAddress?.street}, ${order.shippingAddress?.city}, ${order.shippingAddress?.state} ${order.shippingAddress?.zip}</p>
+          <p class="text-sm text-ink/60">${order.shippingAddress?.country}</p>
+        </div>
+
+        <!-- Estimated delivery (set by delivery person) -->
+        ${order.estimatedDelivery ? `
+        <div class="flex items-center gap-3 px-4 py-3 bg-purple-50 border border-purple-100 rounded-xl">
+          <ion-icon name="time-outline" class="text-purple-500 text-xl flex-shrink-0"></ion-icon>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-0.5">Estimated Delivery</p>
+            <p class="text-sm font-semibold text-purple-800">${new Date(order.estimatedDelivery).toLocaleString('en-US',{weekday:'long',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+          </div>
+        </div>` : (order.status === 'shipped' ? `
+        <div class="flex items-center gap-3 px-4 py-3 bg-stone-light rounded-xl">
+          <ion-icon name="bicycle-outline" class="text-ink/40 text-xl flex-shrink-0"></ion-icon>
+          <p class="text-sm text-ink/50">Your order is on its way — estimated delivery coming soon</p>
+        </div>` : '')}
+
+        <!-- Delivery notes -->
+        ${order.deliveryNotes ? `
+        <div class="flex items-center gap-3 px-4 py-3 bg-stone-light rounded-xl">
+          <ion-icon name="chatbubble-outline" class="text-ink/40 text-base flex-shrink-0"></ion-icon>
+          <p class="text-xs text-ink/60"><span class="font-medium">Delivery note:</span> ${order.deliveryNotes}</p>
+        </div>` : ''}
+
+        <!-- Actions -->
+        ${order.status === 'pending' ? `
+          <button onclick="cancelOrder('${order._id}')" class="w-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+            <ion-icon name="close-circle-outline"></ion-icon> Cancel Order
+          </button>` : order.status === 'cancelled' ? `
+          <div class="w-full text-center text-xs text-red-400 py-3 bg-red-50 rounded-xl font-medium">
+            This order has been cancelled
+          </div>` : order.status === 'delivered' ? `
+          <div class="w-full text-center text-xs text-emerald-600 py-3 bg-emerald-50 rounded-xl font-medium">
+            ✓ Order delivered ${order.deliveredAt ? '· ' + new Date(order.deliveredAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''}
+          </div>` : `
+          <div class="w-full text-center text-xs text-ink/40 py-3 bg-stone-light rounded-xl">
+            Order is <span class="font-semibold capitalize">${order.status}</span> — cancellation no longer available
+          </div>`}
+      </div>`;
+  } catch(e) { body.innerHTML = `<p class="text-sm text-red-500 text-center py-8">${e.message}</p>`; }
+}
+
+function closeOrderModal() { document.getElementById('order-detail-modal').classList.add('hidden'); }
+document.getElementById('order-detail-modal').addEventListener('click', e => { if(e.target === e.currentTarget) closeOrderModal(); });
+
+async function cancelOrder(id) {
+  if (!confirm('Cancel this order?')) return;
+  try {
+    await Orders.cancel(id);
+    showToast('Order cancelled');
+    closeOrderModal();
+    loadOrders();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+document.getElementById('order-filter').addEventListener('change', e => loadOrders(e.target.value));
+
+/* ─── Wishlist ───────────────────────────────────────────────── */
+async function loadWishlist() {
+  const grid = document.getElementById('wishlist-grid');
+  grid.innerHTML = '<div class="col-span-full bg-white rounded-2xl p-10 text-center text-ink/30 text-sm border border-stone-mid/50">Loading…</div>';
+  try {
+    const { wishlist } = await Users.wishlist();
+    if (!wishlist?.length) {
+      grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl p-12 text-center border border-stone-mid/50">
+        <ion-icon name="heart-outline" class="text-5xl text-ink/15 mb-4"></ion-icon>
+        <p class="text-sm text-ink/40">Your wishlist is empty</p>
+        <a href="shop.html" class="inline-block mt-4 text-sm text-accent hover:underline">Discover products →</a>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = wishlist.map(p => `
+      <div class="group bg-white rounded-2xl overflow-hidden border border-stone-mid/50 hover:border-stone-mid hover:shadow-md transition-all cursor-pointer" onclick="window.location.href='product.html?id=${p._id}'">
+        <div class="relative aspect-square bg-stone-light overflow-hidden">
+          <img src="${p.thumbnail||'https://placehold.co/300x300/f5f5f4/a8a29e?text=?'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${p.name}">
+          <button onclick="event.stopPropagation();removeFromWishlist('${p._id}', this)"
+            class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow hover:bg-red-50 transition-colors">
+            <ion-icon name="heart" class="text-red-400 text-sm"></ion-icon>
+          </button>
+        </div>
+        <div class="p-3">
+          <p class="text-sm font-medium line-clamp-1 mb-1">${p.name}</p>
+          <p class="font-display text-base">$${Number(p.price).toFixed(2)}</p>
+          <button onclick="event.stopPropagation();addToCartFromWishlist('${p._id}')"
+            class="mt-2 w-full py-2 bg-ink text-white text-xs rounded-full font-medium hover:bg-ink/80 transition-colors flex items-center justify-center gap-1">
+            <ion-icon name="bag-add-outline"></ion-icon> Add to Cart
+          </button>
+        </div>
+      </div>`).join('');
+  } catch(e) { grid.innerHTML = `<div class="col-span-full text-center text-red-500 text-sm py-8">${e.message}</div>`; }
+}
+
+async function removeFromWishlist(pid) {
+  try { await Users.toggleWishlist(pid); showToast('Removed from wishlist', 'info'); loadWishlist(); } catch(e) { showToast(e.message,'error'); }
+}
+async function addToCartFromWishlist(pid) {
+  try { await Cart.add(pid, 1, ''); showToast('Added to cart!'); } catch(e) { showToast(e.message,'error'); }
+}
+
+/* ─── Profile ────────────────────────────────────────────────── */
+async function prefillProfile() {
+  try {
+    const { user } = await Users.profile();
+    document.getElementById('pf-name').value = user.name || '';
+    document.getElementById('pf-phone').value = user.phone || '';
+    document.getElementById('pf-email').value = user.email || '';
+    document.getElementById('pf-street').value = user.address?.street || '';
+    document.getElementById('pf-city').value = user.address?.city || '';
+    document.getElementById('pf-state').value = user.address?.state || '';
+    document.getElementById('pf-zip').value = user.address?.zip || '';
+    document.getElementById('pf-country').value = user.address?.country || '';
+  } catch {}
+}
+
+document.getElementById('profile-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('pf-save-btn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const user = await Users.updateProfile({
+      name: document.getElementById('pf-name').value,
+      phone: document.getElementById('pf-phone').value,
+      address: {
+        street: document.getElementById('pf-street').value,
+        city: document.getElementById('pf-city').value,
+        state: document.getElementById('pf-state').value,
+        zip: document.getElementById('pf-zip').value,
+        country: document.getElementById('pf-country').value,
+      },
+    });
+    // Update cached user
+    const saved = Auth.getUser();
+    if (saved) {
+      saved.name = document.getElementById('pf-name').value;
+      localStorage.setItem('anon_user', JSON.stringify(saved));
+    }
+    showToast('Profile updated!');
+  } catch(err) { showToast(err.message, 'error'); }
+  finally { btn.textContent = 'Save Changes'; btn.disabled = false; }
+});
+
+/* ─── Password ───────────────────────────────────────────────── */
+document.getElementById('password-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const np = document.getElementById('pw-new').value;
+  const cp = document.getElementById('pw-confirm').value;
+  if (np !== cp) { showToast('Passwords do not match', 'error'); return; }
+  const btn = document.getElementById('pw-save-btn');
+  btn.textContent = 'Updating…'; btn.disabled = true;
+  try {
+    await Auth.updatePassword({ currentPassword: document.getElementById('pw-current').value, newPassword: np });
+    showToast('Password updated!');
+    e.target.reset();
+  } catch(err) { showToast(err.message, 'error'); }
+  finally { btn.textContent = 'Update Password'; btn.disabled = false; }
+});
+
+/* ─── Logout ─────────────────────────────────────────────────── */
+document.getElementById('logout-btn').addEventListener('click', Auth.logout);
+
+/* ─── Boot ───────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

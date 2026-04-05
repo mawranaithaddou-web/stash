@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Delivery — Anon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body: ['"DM Sans"', 'sans-serif'],
+          },
+          colors: {
+            ink: { DEFAULT: '#0d0d0d', soft: '#1a1a1a', muted: '#6b7280' },
+            stone: { light: '#f5f5f4', mid: '#e7e5e4', dark: '#a8a29e' },
+            accent: { DEFAULT: '#c9a96e', light: '#f0e6d3', dark: '#a07840' },
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background-color: #f5f5f4; -webkit-tap-highlight-color: transparent; }
+    .font-display { font-family: 'DM Serif Display', serif; }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .dash-panel { display: none; animation: fadeIn 0.3s ease-in-out; }
+    .dash-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .slot-btn.selected { background-color: #c9a96e; color: white; border-color: #c9a96e; }
+    
+    /* Smooth number counter animation */
+    .stat-number { transition: all 0.5s ease-out; }
+  </style>
+</head>
+<body class="text-ink min-h-screen pb-24 lg:pb-0 flex flex-col">
+
+<!-- Toast Notification -->
+<div id="app-toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium opacity-0 pointer-events-none transition-all duration-300 w-[90%] max-w-sm justify-center bg-ink text-white">
+  <ion-icon id="toast-icon" name="checkmark-circle-outline" class="text-xl flex-shrink-0 text-accent"></ion-icon>
+  <span id="toast-msg" class="font-medium">Message</span>
+</div>
+
+<!-- ── DESKTOP SIDEBAR ─────────────────────────────── -->
+<aside class="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 bg-ink text-white flex-col shadow-2xl">
+  <div class="p-8 border-b border-white/10">
+    <a href="#" class="font-display text-3xl tracking-tight text-white">Anon</a>
+    <div class="mt-2 text-[10px] uppercase tracking-[0.2em] text-accent font-bold">Dispatch Console</div>
+  </div>
+  <nav class="flex-1 p-4 space-y-2">
+    <button onclick="switchPanel('home')" id="desktop-btn-home" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors bg-white/10 text-white">
+      <ion-icon name="grid-outline" class="text-lg"></ion-icon> Overview
+    </button>
+    <button onclick="switchPanel('queue')" id="desktop-btn-queue" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-white/60 hover:bg-white/10 hover:text-white">
+      <ion-icon name="list-outline" class="text-lg"></ion-icon> Pickup Queue
+    </button>
+    <button onclick="switchPanel('active')" id="desktop-btn-active" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-white/60 hover:bg-white/10 hover:text-white">
+      <ion-icon name="bicycle-outline" class="text-lg"></ion-icon> Out for Delivery
+    </button>
+    <button onclick="switchPanel('history')" id="desktop-btn-history" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-white/60 hover:bg-white/10 hover:text-white">
+      <ion-icon name="archive-outline" class="text-lg"></ion-icon> History
+    </button>
+  </nav>
+  <div class="p-4 border-t border-white/10">
+    <button id="logout-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors">
+      <ion-icon name="log-out-outline" class="text-lg"></ion-icon> Logout
+    </button>
+  </div>
+</aside>
+
+<!-- ── MAIN CONTENT ─────────────────────────────────── -->
+<main class="flex-1 lg:ml-64 flex flex-col min-h-screen">
+  
+  <!-- Mobile Header -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-mid px-5 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-ink text-white flex items-center justify-center font-bold text-sm shadow-md">D</div>
+      <div>
+        <h1 id="dash-page-title" class="font-display text-xl leading-tight text-ink">Overview</h1>
+        <p id="driver-name-display" class="text-xs text-ink/40 font-medium">Driver Name</p>
+      </div>
+    </div>
+    <button onclick="refreshCurrentPanel()" class="w-10 h-10 rounded-full bg-stone-light flex items-center justify-center text-ink hover:bg-stone-mid transition-colors">
+        <ion-icon name="refresh-outline" class="text-xl"></ion-icon>
+    </button>
+  </header>
+
+  <div class="p-4 lg:p-8 space-y-6 flex-1">
+    
+    <!-- HOME PANEL (STATS) -->
+    <section class="dash-panel active space-y-6" id="panel-home">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Stat Card 1 -->
+        <div class="bg-white p-4 rounded-2xl border border-stone-mid shadow-sm flex flex-col justify-between h-32 relative overflow-hidden">
+          <div class="absolute right-0 top-0 p-3 opacity-5"><ion-icon name="cube-outline" class="text-6xl"></ion-icon></div>
+          <p class="text-xs font-bold uppercase tracking-widest text-ink/40">Pending</p>
+          <div class="flex items-end gap-2">
+             <span id="stat-pending" class="font-display text-4xl text-blue-600">0</span>
+             <span class="text-xs text-ink/40 mb-1.5">orders</span>
+          </div>
+          <button onclick="switchPanel('queue')" class="text-[10px] font-bold uppercase text-ink/40 hover:text-blue-600">View Queue &rarr;</button>
+        </div>
+
+        <!-- Stat Card 2 -->
+        <div class="bg-white p-4 rounded-2xl border border-stone-mid shadow-sm flex flex-col justify-between h-32 relative overflow-hidden">
+           <div class="absolute right-0 top-0 p-3 opacity-5"><ion-icon name="bicycle-outline" class="text-6xl"></ion-icon></div>
+           <p class="text-xs font-bold uppercase tracking-widest text-ink/40">Active</p>
+           <div class="flex items-end gap-2">
+              <span id="stat-active" class="font-display text-4xl text-amber-500">0</span>
+              <span class="text-xs text-ink/40 mb-1.5">on route</span>
+           </div>
+           <button onclick="switchPanel('active')" class="text-[10px] font-bold uppercase text-ink/40 hover:text-amber-500">View Active &rarr;</button>
+        </div>
+
+        <!-- Stat Card 3 -->
+        <div class="bg-white p-4 rounded-2xl border border-stone-mid shadow-sm flex flex-col justify-between h-32 relative overflow-hidden">
+           <div class="absolute right-0 top-0 p-3 opacity-5"><ion-icon name="checkmark-circle-outline" class="text-6xl"></ion-icon></div>
+           <p class="text-xs font-bold uppercase tracking-widest text-ink/40">Completed</p>
+           <div class="flex items-end gap-2">
+              <span id="stat-completed" class="font-display text-4xl text-emerald-600">0</span>
+              <span class="text-xs text-ink/40 mb-1.5">today</span>
+           </div>
+           <button onclick="switchPanel('history')" class="text-[10px] font-bold uppercase text-ink/40 hover:text-emerald-600">View History &rarr;</button>
+        </div>
+
+        <!-- Stat Card 4 (Revenue) -->
+        <div class="bg-ink text-white p-4 rounded-2xl shadow-sm flex flex-col justify-between h-32 relative overflow-hidden border border-stone-mid">
+           <div class="absolute right-0 top-0 p-3 opacity-10"><ion-icon name="cash-outline" class="text-6xl text-accent"></ion-icon></div>
+           <p class="text-xs font-bold uppercase tracking-widest text-white/50">COD Collected</p>
+           <div class="flex items-end gap-1">
+              <span class="font-display text-2xl text-accent leading-none">$</span>
+              <span id="stat-revenue" class="font-display text-3xl text-white leading-none">0</span>
+           </div>
+           <p class="text-[10px] text-white/30 italic">Estimated Total</p>
+        </div>
+      </div>
+
+      <!-- Today's Progress -->
+      <div class="bg-white rounded-2xl p-6 border border-stone-mid">
+         <h3 class="font-display text-xl mb-4">Today's Progress</h3>
+         <div class="w-full bg-stone-light rounded-full h-4 overflow-hidden">
+            <div id="progress-bar" class="bg-accent h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
+         </div>
+         <div class="flex justify-between mt-2 text-xs font-bold uppercase tracking-widest text-ink/40">
+            <span>Start</span>
+            <span id="progress-text">0% Complete</span>
+            <span>Goal</span>
+         </div>
+      </div>
+    </section>
+
+    <!-- QUEUE PANEL -->
+    <section class="dash-panel space-y-4" id="panel-queue">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-sm font-bold uppercase tracking-widest text-ink/40">Ready for Pickup</h2>
+      </div>
+      <div id="queue-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- ACTIVE PANEL -->
+    <section class="dash-panel space-y-4" id="panel-active">
+      <h2 class="text-sm font-bold uppercase tracking-widest text-ink/40 px-1">Out for Delivery</h2>
+      <div id="active-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- HISTORY PANEL -->
+    <section class="dash-panel space-y-4" id="panel-history">
+      <h2 class="text-sm font-bold uppercase tracking-widest text-ink/40 px-1">Completed</h2>
+      <div id="history-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ── MOBILE BOTTOM NAV (High Contrast) ────────────── -->
+<nav class="lg:hidden fixed bottom-0 w-full bg-ink border-t border-white/10 z-40 pb-safe">
+  <div class="flex items-center justify-around h-16 shadow-[0_-5px_15px_rgba(0,0,0,0.1)]">
+    <button onclick="switchPanel('home')" id="mobile-btn-home" class="nav-item active flex flex-col items-center justify-center w-full h-full text-white/50 space-y-1">
+      <ion-icon name="grid-outline" class="text-2xl"></ion-icon>
+      <span class="text-[9px] font-bold uppercase tracking-wider">Home</span>
+    </button>
+    <button onclick="switchPanel('queue')" id="mobile-btn-queue" class="nav-item flex flex-col items-center justify-center w-full h-full text-white/50 space-y-1">
+      <ion-icon name="list-outline" class="text-2xl"></ion-icon>
+      <span class="text-[9px] font-bold uppercase tracking-wider">Queue</span>
+    </button>
+    <button onclick="switchPanel('active')" id="mobile-btn-active" class="nav-item flex flex-col items-center justify-center w-full h-full text-white/50 space-y-1">
+      <ion-icon name="bicycle-outline" class="text-2xl"></ion-icon>
+      <span class="text-[9px] font-bold uppercase tracking-wider">Active</span>
+    </button>
+    <button onclick="switchPanel('history')" id="mobile-btn-history" class="nav-item flex flex-col items-center justify-center w-full h-full text-white/50 space-y-1">
+      <ion-icon name="archive-outline" class="text-2xl"></ion-icon>
+      <span class="text-[9px] font-bold uppercase tracking-wider">History</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════ MODAL: ORDER DETAILS ═══════════ -->
+<div id="order-details-modal" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onclick="closeDetailsModal()"></div>
+  
+  <div class="absolute inset-0 flex items-end sm:items-center justify-center pointer-events-none">
+    <div class="bg-white w-full sm:max-w-2xl sm:rounded-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] shadow-2xl overflow-hidden flex flex-col pointer-events-auto rounded-t-3xl animate-up">
+      
+      <!-- Handle -->
+      <div class="w-full flex justify-center pt-3 pb-1 sm:hidden bg-white">
+        <div class="w-12 h-1 bg-stone-mid rounded-full"></div>
+      </div>
+
+      <!-- Header -->
+      <div class="p-5 border-b border-stone-mid flex items-center justify-between bg-stone-light/50">
+        <div>
+          <h2 id="modal-order-id" class="font-display text-2xl text-ink">Order #</h2>
+          <div class="flex items-center gap-2 mt-1">
+             <span id="modal-order-status" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700">Confirmed</span>
+          </div>
+        </div>
+        <button onclick="closeDetailsModal()" class="p-2 -mr-2 text-ink/50 hover:text-ink">
+          <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-6 bg-white">
+        
+        <!-- Buyer Card -->
+        <div class="bg-stone-light rounded-xl p-4 border border-stone-mid/30">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3">Customer Details</h3>
+          <div class="flex items-center gap-3 mb-3">
+             <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-accent shadow-sm">
+                <ion-icon name="person-outline" class="text-xl"></ion-icon>
+             </div>
+             <div>
+                <p id="modal-buyer-name" class="font-bold text-lg leading-tight">Loading...</p>
+                <a id="modal-buyer-phone-link" href="#" class="text-xs font-bold text-accent flex items-center gap-1 mt-1">
+                   <ion-icon name="call-outline"></ion-icon> <span id="modal-buyer-phone">...</span>
+                </a>
+             </div>
+          </div>
+          <div class="bg-white rounded-lg p-3 text-sm text-ink/80 flex gap-2 items-start shadow-inner">
+             <ion-icon name="location-outline" class="mt-0.5 text-ink/40 flex-shrink-0"></ion-icon>
+             <span id="modal-shipping-address">Address...</span>
+          </div>
+        </div>
+
+        <!-- Payment Card -->
+        <div class="bg-ink text-white rounded-xl p-4 flex justify-between items-center shadow-lg">
+          <div>
+            <p class="text-xs text-white/50 uppercase tracking-wider mb-1">Total Due</p>
+            <p id="modal-total-amount" class="font-display text-2xl text-accent">$0.00</p>
+          </div>
+          <div class="text-right">
+             <span id="modal-payment-method" class="block text-xs font-bold uppercase bg-white/10 px-3 py-1 rounded text-white">COD</span>
+          </div>
+        </div>
+
+        <!-- Items List -->
+        <div>
+          <h3 class="font-bold text-xs uppercase tracking-widest text-ink/40 mb-3">Order Contents</h3>
+          <div id="modal-vendors-container" class="space-y-3">
+             <div class="p-4 text-center text-ink/30 italic text-sm">Loading items...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sticky Footer Actions -->
+      <div class="p-5 border-t border-stone-mid bg-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)]" id="modal-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: CUSTOM DATE PICKER ═══════════ -->
+<div id="estimate-modal" class="fixed inset-0 z-[70] hidden">
+  <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeEstimateModal()"></div>
+  
+  <div class="absolute bottom-0 w-full sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md bg-white sm:rounded-2xl rounded-t-3xl shadow-2xl p-6 animate-up">
+    
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="font-display text-2xl">Schedule Delivery</h3>
+        <button onclick="closeEstimateModal()" class="p-2 -mr-2"><ion-icon name="close-outline" class="text-2xl"></ion-icon></button>
+    </div>
+
+    <p class="text-sm text-ink/60 mb-6">Order <span id="est-modal-order-id" class="font-bold text-ink"></span> picked up. Select delivery window:</p>
+    
+    <!-- Date Selection -->
+    <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Select Date</label>
+    <div class="grid grid-cols-3 gap-2 mb-6">
+        <button onclick="selectDate(0, this)" class="slot-btn selected py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors">Today</button>
+        <button onclick="selectDate(1, this)" class="slot-btn py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors">Tomorrow</button>
+        <button onclick="selectDate(2, this)" class="slot-btn py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors">+2 Days</button>
+    </div>
+
+    <!-- Time Selection -->
+    <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Select Time</label>
+    <div class="grid grid-cols-2 gap-2 mb-8">
+        <button onclick="selectTime(10, this)" class="slot-btn selected py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors flex items-center justify-center gap-2">
+           <ion-icon name="sunny-outline"></ion-icon> 10:00 AM
+        </button>
+        <button onclick="selectTime(14, this)" class="slot-btn py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors flex items-center justify-center gap-2">
+           <ion-icon name="partly-sunny-outline"></ion-icon> 02:00 PM
+        </button>
+        <button onclick="selectTime(17, this)" class="slot-btn py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors flex items-center justify-center gap-2">
+           <ion-icon name="moon-outline"></ion-icon> 05:00 PM
+        </button>
+        <button onclick="selectTime(20, this)" class="slot-btn py-3 rounded-xl border border-stone-mid text-sm font-medium hover:bg-stone-light transition-colors flex items-center justify-center gap-2">
+           <ion-icon name="cloudy-night-outline"></ion-icon> 08:00 PM
+        </button>
+    </div>
+
+    <!-- Confirm Button -->
+    <button onclick="confirmShipment()" class="w-full bg-accent text-white py-4 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-accent/30 text-lg">Confirm Delivery</button>
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+  // --- MOCK API ---
+  if(typeof Delivery === 'undefined') {
+    console.warn("API client not found. Using mock data.");
+    window.Delivery = {
+        getOrders: async (status) => {
+            const mockOrders = [
+                { _id: '1', orderNumber: 'ORD-8821', buyer: { name: 'Sarah Connor', phone: '555-0101' }, totalAmount: 120.50, shippingAddress: '123 Tech Lane', paymentMethod: 'cod', status: 'confirmed', createdAt: new Date() },
+                { _id: '2', orderNumber: 'ORD-9932', buyer: { name: 'John Wick', phone: '555-0102' }, totalAmount: 45.00, shippingAddress: '454 Continental Ave', paymentMethod: 'card', status: 'confirmed', createdAt: new Date() },
+                { _id: '3', orderNumber: 'ORD-1102', buyer: { name: 'Bruce Wayne', phone: '555-0103' }, totalAmount: 299.99, shippingAddress: '1007 Mountain Drive', paymentMethod: 'cod', status: 'shipped', estimatedDelivery: new Date(), createdAt: new Date() },
+                { _id: '4', orderNumber: 'ORD-4401', buyer: { name: 'Tony Stark', phone: '555-0104' }, totalAmount: 500.00, shippingAddress: '10880 Malibu Point', paymentMethod: 'card', status: 'delivered', createdAt: new Date() }
+            ];
+            let filtered = mockOrders;
+            if(status) filtered = mockOrders.filter(o => o.status === status);
+            return { success: true, orders: filtered };
+        },
+        getOrder: async (id) => {
+             return { 
+                success: true, 
+                order: {
+                    _id: id, 
+                    orderNumber: 'ORD-8821', 
+                    status: 'confirmed', 
+                    paymentStatus: 'unpaid', 
+                    paymentMethod: 'cod',
+                    totalAmount: 150.00, 
+                    shippingAddress: '123 Tech Lane, Silicon Valley, CA',
+                    buyer: { name: 'Sarah Connor', phone: '+1 555 0199' },
+                    vendorOrders: [
+                        { _id: 'vo1', status: 'confirmed', vendor: { storeName: 'Cyberdyne Systems' }, items: [{ name: 'T-800 CPU', price: 80.00, quantity: 1 }, { name: 'Metal Alloy', price: 35.00, quantity: 2 }] }
+                    ]
+                }
+             };
+        },
+        updateStatus: async (id, data) => ({ success: true, message: "Updated" })
+    };
+    if(typeof api === 'undefined') window.api = { get: async (p) => ({ success: true }), put: async (p,d) => ({ success: true }) };
+  }
+  if(Delivery && !Delivery.getOrder) Delivery.getOrder = (id) => api.get(`/delivery/orders/${id}`);
+
+  let currentDetailOrderId = null;
+  let currentActionOrderId = null;
+  let selectedDateOffset = 0;
+  let selectedHour = 10; 
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('app-toast');
+    const msgEl = t.querySelector('#toast-msg');
+    const icon = t.querySelector('#toast-icon');
+    msgEl.textContent = msg;
+    const styles = { success: ['bg-ink text-white', 'checkmark-circle-outline'], error: ['bg-red-600 text-white', 'alert-circle-outline'] };
+    const [cls, ico] = styles[type] || styles.success;
+    t.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium transition-all duration-300 w-[90%] max-w-sm justify-center ${cls}`;
+    icon.name = ico;
+    t.style.opacity = '1'; t.style.pointerEvents = 'auto';
+    setTimeout(() => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; }, 3000);
+  }
+
+  function refreshCurrentPanel() {
+     const active = document.querySelector('.dash-panel.active').id.replace('panel-', '');
+     if(active === 'home') loadHomeStats();
+     else loadDeliveryData(active);
+     showToast('Refreshed');
+  }
+
+  function switchPanel(name) {
+    document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+name)?.classList.add('active');
+    
+    const titles = { 'home': 'Overview', 'queue': 'Pickup Queue', 'active': 'Out for Delivery', 'history': 'History' };
+    document.getElementById('dash-page-title').textContent = titles[name];
+    
+    // Reset Nav Styles
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('text-accent', 'bg-white/10');
+        btn.classList.add('text-white/50');
+    });
+    document.querySelectorAll('button[id^="desktop-btn"]').forEach(btn => {
+        btn.classList.remove('bg-white/10', 'text-white');
+        btn.classList.add('text-white/60');
+    });
+
+    // Set Active Nav
+    const mobBtn = document.getElementById(`mobile-btn-${name}`);
+    const deskBtn = document.getElementById(`desktop-btn-${name}`);
+    
+    if(mobBtn) {
+        mobBtn.classList.remove('text-white/50');
+        mobBtn.classList.add('text-accent');
+    }
+    if(deskBtn) {
+        deskBtn.classList.remove('text-white/60');
+        deskBtn.classList.add('bg-white/10', 'text-white');
+    }
+
+    // Load Data
+    if(name === 'home') loadHomeStats();
+    else {
+        const statusMap = { 'queue': 'confirmed', 'active': 'shipped', 'history': 'delivered' };
+        if(statusMap[name]) loadDeliveryData(statusMap[name]);
+    }
+  }
+
+  // --- HOME STATS LOGIC ---
+  async function loadHomeStats() {
+    try {
+        // In a real app, you might have a dedicated stats endpoint. 
+        // Here we aggregate from the list endpoints for simplicity.
+        const [pendingRes, activeRes, completedRes] = await Promise.all([
+            Delivery.getOrders('confirmed'),
+            Delivery.getOrders('shipped'),
+            Delivery.getOrders('delivered')
+        ]);
+
+        const pending = pendingRes.orders.length;
+        const active = activeRes.orders.length;
+        const completed = completedRes.orders.length;
+        
+        // Calculate COD Revenue (sum of confirmed + active COD orders)
+        const codOrders = [...pendingRes.orders, ...activeRes.orders].filter(o => o.paymentMethod === 'cod');
+        const revenue = codOrders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+
+        // Update UI with simple animation
+        document.getElementById('stat-pending').textContent = pending;
+        document.getElementById('stat-active').textContent = active;
+        document.getElementById('stat-completed').textContent = completed;
+        document.getElementById('stat-revenue').textContent = revenue.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+        // Update Progress Bar (Goal: 10 deliveries per day)
+        const goal = 10;
+        const percentage = Math.min((completed / goal) * 100, 100);
+        document.getElementById('progress-bar').style.width = `${percentage}%`;
+        document.getElementById('progress-text').textContent = `${Math.round(percentage)}% of Daily Goal`;
+
+    } catch(e) {
+        console.error(e);
+    }
+  }
+
+  // --- LIST LOGIC ---
+  async function loadDeliveryData(status) {
+    const idMap = { 'confirmed': 'queue-container', 'shipped': 'active-container', 'delivered': 'history-container' };
+    const container = document.getElementById(idMap[status]);
+    if(!container) return;
+    
+    container.innerHTML = `<div class="col-span-full py-12 text-center text-ink/30 animate-pulse"><ion-icon name="sync-outline" class="text-3xl animate-spin mb-2 block mx-auto"></ion-icon>Loading...</div>`;
+
+    try {
+      const res = await Delivery.getOrders(status);
+      const orders = res.orders || [];
+      
+      if(orders.length === 0) { container.innerHTML = `<div class="col-span-full py-10 text-center text-ink/40">No ${status} orders found.</div>`; return; }
+
+      container.innerHTML = orders.map(o => {
+        const isConfirmed = status === 'confirmed';
+        const isShipped = status === 'shipped';
+        
+        let primaryBtn = '';
+        if(isConfirmed) primaryBtn = `<button onclick="prepareShipment('${o._id}')" class="w-full bg-ink text-white py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-accent transition-colors shadow-lg shadow-ink/20 flex items-center justify-center gap-2"><ion-icon name="cube-outline"></ion-icon> Mark Shipped</button>`;
+        else if(isShipped) primaryBtn = `<button onclick="prepareDelivery('${o._id}')" class="w-full bg-emerald-600 text-white py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-emerald-700 shadow-lg flex items-center justify-center gap-2"><ion-icon name="checkmark-done-outline"></ion-icon> Mark Delivered</button>`;
+
+        return `
+        <div class="bg-white rounded-2xl p-5 border border-stone-mid shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full relative overflow-hidden">
+           <div class="flex justify-between items-start mb-4">
+              <div>
+                 <span class="text-xs font-bold text-ink/40 block mb-1">Order #</span>
+                 <span class="font-display text-lg leading-tight block">${o.orderNumber}</span>
+              </div>
+              <span class="px-2 py-1 rounded text-[9px] font-bold uppercase ${isConfirmed ? 'bg-blue-50 text-blue-600' : isShipped ? 'bg-amber-50 text-amber-600' : 'bg-stone-100 text-stone-500'}">${status}</span>
+           </div>
+           <div class="space-y-2 mb-5">
+              <div class="flex items-center gap-2 text-sm text-ink/80">
+                 <ion-icon name="person-outline" class="text-lg text-accent"></ion-icon>
+                 <span class="font-medium">${o.buyer?.name||'Guest'}</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-ink/50 pl-1">
+                 <ion-icon name="time-outline" class="text-base"></ion-icon>
+                 <span>${new Date(o.createdAt || Date.now()).toLocaleDateString()}</span>
+              </div>
+              ${isShipped ? `<div class="flex items-center gap-2 text-xs text-emerald-600 font-medium pl-1 bg-emerald-50 p-1.5 rounded-lg"><ion-icon name="calendar-outline"></ion-icon> Est: ${o.estimatedDelivery ? new Date(o.estimatedDelivery).toLocaleDateString() : 'TBD'}</div>` : ''}
+           </div>
+           <div class="pt-4 border-t border-stone-mid/50 space-y-3">
+              <div class="flex items-center justify-between">
+                 <span class="text-xs text-ink/40 uppercase tracking-widest font-bold">Total</span>
+                 <span class="font-display text-lg">$${Number(o.totalAmount).toFixed(2)}</span>
+              </div>
+              ${primaryBtn}
+              <button onclick="openOrderDetails('${o._id}')" class="w-full text-xs font-bold text-ink/40 hover:text-accent uppercase tracking-widest py-1 transition-colors">View Full Details</button>
+           </div>
+        </div>`;
+      }).join('');
+
+    } catch (e) { container.innerHTML = `<div class="col-span-full py-10 text-center text-red-500 text-sm px-4">Error: ${e.message}</div>`; }
+  }
+
+  /* ─── ORDER DETAILS MODAL LOGIC (FIXED) ───────────────────────────────── */
+  /* ─── UPDATED ORDER DETAILS MODAL LOGIC ─────────────────────────── */
+  async function openOrderDetails(id) {
+    currentDetailOrderId = id;
+    const modal = document.getElementById('order-details-modal');
+    const container = document.getElementById('modal-vendors-container');
+    
+    modal.classList.remove('hidden');
+    
+    // Safe Element References
+    const elOrderId = document.getElementById('modal-order-id');
+    const elStatus = document.getElementById('modal-order-status');
+    const elBuyerName = document.getElementById('modal-buyer-name');
+    
+    // Updated for Shipping Phone
+    const elBuyerPhone = document.getElementById('modal-buyer-phone');
+    const elBuyerPhoneLink = document.getElementById('modal-buyer-phone-link');
+    
+    const elAddress = document.getElementById('modal-shipping-address');
+    const elTotal = document.getElementById('modal-total-amount');
+    const elPaymentMethod = document.getElementById('modal-payment-method');
+    const elActions = document.getElementById('modal-actions');
+
+    // Reset UI
+    if(elOrderId) elOrderId.textContent = 'Loading...';
+    if(container) container.innerHTML = '<div class="p-4 text-center text-ink/40">Loading details...</div>';
+    if(elActions) elActions.innerHTML = '';
+
+    try {
+      const res = await Delivery.getOrder(id);
+      const o = res.order;
+
+      if(elOrderId) elOrderId.textContent = `Order #${o.orderNumber}`;
+      if(elStatus) elStatus.textContent = o.status;
+      
+      // --- 1. FIX BUYER DETAILS ---
+      // Use buyer name, but check if it exists
+      if(elBuyerName) elBuyerName.textContent = o.buyer?.name || 'Unknown Buyer';
+
+      // --- 2. FIX PHONE NUMBER ---
+      // Prioritize the phone inside shippingAddress (delivery contact), fallback to buyer phone
+      const deliveryPhone = o.shippingAddress?.phone || o.buyer?.phone || 'No Phone';
+      
+      if(elBuyerPhone) elBuyerPhone.textContent = deliveryPhone;
+      if(elBuyerPhoneLink) elBuyerPhoneLink.href = `tel:${deliveryPhone}`;
+
+      // --- 3. FIX ADDRESS FORMATTING ---
+      // Construct string from object fields based on your schema
+      if(elAddress) {
+        if (o.shippingAddress) {
+          const addr = o.shippingAddress;
+          // Format: Street, City, State Zip, Country
+          const fullAddress = `${addr.street || ''}, ${addr.city || ''}, ${addr.state || ''} ${addr.zip || ''}, ${addr.country || ''}`.replace(/^,|,\s*$/g, ''); // clean up extra commas
+          elAddress.textContent = fullAddress;
+        } else {
+          elAddress.textContent = 'Address not provided';
+        }
+      }
+      
+      // Payment
+      if(elTotal) elTotal.textContent = `$${Number(o.totalAmount).toFixed(2)}`;
+      if(elPaymentMethod) elPaymentMethod.textContent = o.paymentMethod;
+
+      // --- 4. FIX ITEMS LOOP ---
+      if(container && o.vendorOrders && o.vendorOrders.length > 0) {
+        container.innerHTML = o.vendorOrders.map(vo => {
+          // Calculate subtotal from the embedded items
+          const subtotal = vo.items ? vo.items.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
+          
+          // Map items (Schema has: name, thumbnail, price, quantity, variant)
+          const itemsHtml = vo.items ? vo.items.map(item => `
+            <div class="flex justify-between items-center py-2 border-b border-stone-mid/20 last:border-0">
+               <div class="flex items-center gap-2">
+                  ${item.thumbnail ? `<img src="${item.thumbnail}" class="w-8 h-8 rounded object-cover border border-stone-mid">` : ''}
+                  <div class="text-sm text-ink/80">
+                     <span class="font-medium block">${item.name}</span>
+                     ${item.variant ? `<span class="text-[10px] text-ink/40 uppercase">${item.variant}</span>` : ''}
+                  </div>
+               </div>
+               <span class="text-sm font-bold text-ink">$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          `).join('') : '';
+
+          return `
+            <div class="bg-stone-light rounded-xl p-4 border border-stone-mid/30">
+               <div class="flex justify-between items-center mb-2">
+                  <span class="font-bold text-sm uppercase text-ink/60">${vo.vendor?.storeName||'Vendor'}</span>
+                  <span class="text-xs font-bold bg-white px-2 py-1 rounded text-ink/40 border border-stone-mid">$${subtotal.toFixed(2)}</span>
+               </div>
+               <div class="space-y-1">${itemsHtml}</div>
+            </div>
+          `;
+        }).join('');
+      } else if(container) {
+         container.innerHTML = '<div class="text-sm text-ink/40">No items found.</div>';
+      }
+
+      // Footer Actions
+      if(elActions) {
+        if(o.status === 'confirmed') {
+          elActions.innerHTML = `<button onclick="prepareShipment('${o._id}'); closeDetailsModal();" class="w-full bg-accent text-white py-4 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-accent/20 text-base">Mark Shipped</button>`;
+        } else if (o.status === 'shipped') {
+          elActions.innerHTML = `<button onclick="prepareDelivery('${o._id}'); closeDetailsModal();" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold uppercase tracking-widest shadow-lg text-base">Mark Delivered</button>`;
+        } else {
+          elActions.innerHTML = `<button onclick="closeDetailsModal()" class="w-full py-3 bg-stone-mid text-white rounded-xl font-bold">Close</button>`;
+        }
+      }
+
+    } catch (e) {
+      console.error(e);
+      showToast('Failed to load details', 'error');
+      closeDetailsModal();
+    }
+  }
+  function closeDetailsModal() {
+    document.getElementById('order-details-modal').classList.add('hidden');
+    currentDetailOrderId = null;
+  }
+
+  /* ─── CUSTOM DATE PICKER LOGIC ───────────────────────────────── */
+  function prepareShipment(id) {
+    currentActionOrderId = id;
+    const modal = document.getElementById('estimate-modal');
+    document.getElementById('est-modal-order-id').textContent = id;
+    selectedDateOffset = 0;
+    selectedHour = 10;
+    updateSelectionUI();
+    modal.classList.remove('hidden');
+  }
+
+  function closeEstimateModal() {
+    document.getElementById('estimate-modal').classList.add('hidden');
+    currentActionOrderId = null;
+  }
+
+  function selectDate(offset, btn) {
+    selectedDateOffset = offset;
+    updateSelectionUI(btn);
+  }
+
+  function selectTime(hour, btn) {
+    selectedHour = hour;
+    updateSelectionUI(btn);
+  }
+
+  function updateSelectionUI(activeBtn) {
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+    if(activeBtn) activeBtn.classList.add('selected');
+  }
+
+  async function confirmShipment() {
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + selectedDateOffset);
+    deliveryDate.setHours(selectedHour, 0, 0, 0);
+
+    try {
+      await Delivery.updateStatus(currentActionOrderId, { status: 'shipped', estimatedDelivery: deliveryDate.toISOString() });
+      showToast(`Shipment scheduled for ${deliveryDate.toLocaleDateString()} at ${deliveryDate.getHours()}:00`);
+      closeEstimateModal();
+      const activePanel = document.querySelector('.dash-panel.active').id.replace('panel-', '');
+      const map = { 'queue': 'confirmed', 'active': 'shipped', 'history': 'delivered' };
+      if(map[activePanel]) loadDeliveryData(map[activePanel]);
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  async function prepareDelivery(id) {
+    if(!confirm("Confirm delivery?")) return;
+    try {
+      await Delivery.updateStatus(id, { status: 'delivered' });
+      showToast('Order Completed');
+      const activePanel = document.querySelector('.dash-panel.active').id.replace('panel-', '');
+      const map = { 'queue': 'confirmed', 'active': 'shipped', 'history': 'delivered' };
+      if(map[activePanel]) loadDeliveryData(map[activePanel]);
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  /* ─── INIT ───────────────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = localStorage.getItem('anon_user');
+    if(user) {
+        const u = JSON.parse(user);
+        if(u.name) document.getElementById('driver-name-display').textContent = u.name;
+    }
+    switchPanel('home'); // Start at Home
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', () => { localStorage.clear(); window.location.href = '../index.html'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — Anon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body: ['"DM Sans"', 'sans-serif'],
+          },
+          colors: {
+            ink: { DEFAULT: '#0d0d0d', soft: '#1a1a1a', muted: '#6b7280' },
+            stone: { light: '#f5f5f4', mid: '#e7e5e4', dark: '#a8a29e' },
+            accent: { DEFAULT: '#c9a96e', light: '#f0e6d3', dark: '#a07840' },
+          },
+          animation: { 'fade-up': 'fadeUp .4s ease forwards' },
+          keyframes: { fadeUp: { from: { opacity: 0, transform: 'translateY(16px)' }, to: { opacity: 1, transform: 'none' } } },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'DM Serif Display', serif; }
+    #cart-sidebar { transition: transform .35s cubic-bezier(.4,0,.2,1); }
+    .thumb-img { transition: opacity .2s; }
+    .thumb-img.active { opacity: 1; ring: 2px; }
+    .product-card:hover .product-thumb { transform: scale(1.06); }
+    .product-thumb { transition: transform .5s; }
+        .nav-link::after { content:''; display:block; height:1px; background:currentColor; transform:scaleX(0); transition:transform .25s; transform-origin:left; }
+    .nav-link:hover::after { transform:scaleX(1); }
+    #cart-sidebar { transition: transform .35s cubic-bezier(.4,0,.2,1); }
+    #app-toast { transition: all .3s cubic-bezier(.4,0,.2,1); }
+    /* Mobile bottom nav active state */
+    .mobile-nav-item.active { color: #c9a96e; }
+    /* Bottom nav safe area */
+    .safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0); }
+    /* Push main content above mobile bottom nav */
+    @media (max-width: 1023px) { body { padding-bottom: 4.5rem; } }
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-thumb { background:#d6d3d1; border-radius:99px; }
+  </style>
+</head>
+<body class="bg-white text-ink font-body antialiased">
+
+<!-- TOAST -->
+<div id="app-toast" class="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium opacity-0 pointer-events-none max-w-xs" style="transition:all .3s">
+  <ion-icon id="toast-icon" name="checkmark-circle-outline" class="text-lg flex-shrink-0"></ion-icon>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- CART SIDEBAR -->
+<div id="cart-overlay-bg" class="fixed inset-0 z-[800] bg-ink/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+<aside id="cart-sidebar" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[850] flex flex-col translate-x-full shadow-2xl">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-stone-mid">
+    <h2 class="font-display text-xl">Cart <span id="cart-count-badge" class="text-sm font-body font-normal text-ink/40">(0)</span></h2>
+    <button id="cart-close" class="text-ink/40 hover:text-ink transition-colors"><ion-icon name="close-outline" class="text-2xl"></ion-icon></button>
+  </div>
+  <div id="cart-body" class="flex-1 overflow-y-auto px-6 py-4 space-y-4"></div>
+  <div class="px-6 py-5 border-t border-stone-mid space-y-4">
+    <div class="flex justify-between items-center">
+      <span class="text-sm text-ink/60">Subtotal</span>
+      <span id="cart-subtotal" class="font-display text-xl">$0.00</span>
+    </div>
+    <button id="checkout-btn" class="w-full bg-ink text-white py-4 rounded-xl text-sm font-medium hover:bg-ink/80 transition-colors flex items-center justify-center gap-2">
+      <ion-icon name="lock-closed-outline"></ion-icon> Proceed to Checkout
+    </button>
+  </div>
+</aside>
+
+<!-- HEADER -->
+<!-- ═══════════════════ UNIFIED HEADER ═══════════════════ -->
+<header class="sticky top-0 z-[500] bg-white/95 backdrop-blur border-b border-stone-mid">
+  <!-- Promo strip -->
+  <div class="bg-ink text-white text-xs text-center py-2 font-light tracking-wide">
+    Free shipping on orders over $55 · <a href="shop.html" class="underline underline-offset-2 opacity-70 hover:opacity-100">Shop Now</a>
+  </div>
+  <!-- Main nav -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+    <!-- Logo -->
+    <a href="../index.html" class="font-display text-2xl tracking-tight flex-shrink-0">Anon</a>
+
+    <!-- Desktop nav -->
+    <nav class="hidden lg:flex items-center gap-7 ml-4 flex-1">
+      <a href="../index.html" class="nav-link text-sm font-medium">Home</a>
+      <div class="relative group">
+        <button class="nav-link text-sm font-medium flex items-center gap-1">
+          Shop <ion-icon name="chevron-down-outline" class="text-xs mt-0.5"></ion-icon>
+        </button>
+        <div class="absolute top-full left-0 pt-4 hidden group-hover:block">
+          <div class="bg-white border border-stone-mid rounded-xl shadow-xl p-5 w-56 space-y-1">
+            <a href="shop.html" class="block px-3 py-2 text-sm rounded-lg hover:bg-stone-light transition-colors">All Products</a>
+            <div id="nav-categories" class="space-y-1"></div>
+          </div>
+        </div>
+      </div>
+      <a href="shop.html?sort=newest" class="nav-link text-sm font-medium">New In</a>
+      <a href="shop.html?featured=true" class="nav-link text-sm font-medium">Featured</a>
+      <a href="vendors.html" class="nav-link text-sm font-medium">Vendors</a>
+    </nav>
+
+    <!-- Search (desktop) -->
+    <div class="flex-1 max-w-xs hidden md:block">
+      <form id="search-form" class="relative">
+        <input id="search-input" type="search" placeholder="Search products…"
+          class="w-full pl-10 pr-4 py-2.5 bg-stone-light rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-all">
+        <ion-icon name="search-outline" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40 text-base"></ion-icon>
+      </form>
+    </div>
+
+    <!-- Mobile search toggle -->
+    <button id="mobile-search-toggle" class="md:hidden p-2 rounded-full hover:bg-stone-light transition-colors ml-auto">
+      <ion-icon name="search-outline" class="text-xl text-ink/70"></ion-icon>
+    </button>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-1">
+      <!-- Logged-out -->
+      <button id="login-btn-nav" class="hidden lg:flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full border border-stone-mid hover:border-ink transition-colors">
+        <ion-icon name="person-outline"></ion-icon> Log In
+      </button>
+      <!-- Logged-in user menu -->
+      <div id="user-menu" class="hidden items-center gap-1">
+        <a id="nav-account-link" href="account.html" class="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-stone-light transition-colors text-sm font-medium">
+          <div class="w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center text-xs font-bold" id="user-avatar-init">A</div>
+          <span id="user-name-nav" class="hidden sm:block"></span>
+        </a>
+        <a id="nav-vendor-link" href="vendor-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Vendor Dashboard">
+          <ion-icon name="storefront-outline" class="text-lg"></ion-icon>
+        </a>
+        <a id="nav-admin-link" href="admin-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Admin">
+          <ion-icon name="settings-outline" class="text-lg"></ion-icon>
+        </a>
+        <button id="logout-btn" class="p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Logout">
+          <ion-icon name="log-out-outline" class="text-lg"></ion-icon>
+        </button>
+      </div>
+      <!-- Wishlist -->
+      <a href="account.html" class="hidden sm:flex p-2 rounded-full hover:bg-stone-light transition-colors relative">
+        <ion-icon name="heart-outline" class="text-lg text-ink/70"></ion-icon>
+      </a>
+      <!-- Cart -->
+      <button id="cart-btn" class="p-2 rounded-full hover:bg-stone-light transition-colors relative">
+        <ion-icon name="bag-handle-outline" class="text-lg text-ink/70"></ion-icon>
+        <span id="cart-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center opacity-0">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile search bar (collapsible) -->
+  <div id="mobile-search-bar" class="md:hidden hidden px-4 pb-3">
+    <form id="search-form-mobile" class="relative">
+      <input id="search-input-mobile" type="search" placeholder="Search products…"
+        class="w-full pl-10 pr-4 py-2.5 bg-stone-light rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-all">
+      <ion-icon name="search-outline" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40 text-base"></ion-icon>
+    </form>
+  </div>
+</header>
+
+<!-- ═══════════════════ MOBILE BOTTOM NAVBAR ═══════════════════ -->
+<nav id="mobile-bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 z-[600] bg-white/95 backdrop-blur border-t border-stone-mid safe-area-pb">
+  <div class="flex items-center justify-around px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <a href="../index.html" class="mobile-nav-item flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <ion-icon name="home-outline" class="text-xl"></ion-icon>
+      <span class="text-[10px] font-medium">Home</span>
+    </a>
+    <a href="shop.html" class="mobile-nav-item active flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <ion-icon name="grid-outline" class="text-xl"></ion-icon>
+      <span class="text-[10px] font-medium">Shop</span>
+    </a>
+    <a href="vendors.html" class="mobile-nav-item flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <ion-icon name="storefront-outline" class="text-xl"></ion-icon>
+      <span class="text-[10px] font-medium">Vendors</span>
+    </a>
+    <button id="mobile-cart-btn" class="mobile-nav-item relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors text-ink/50 hover:text-ink">
+      <span class="relative">
+        <ion-icon name="bag-handle-outline" class="text-xl"></ion-icon>
+        <span id="mobile-cart-badge" class="absolute -top-1 -right-1.5 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center opacity-0">0</span>
+      </span>
+      <span class="text-[10px] font-medium">Cart</span>
+    </button>
+  </div>
+</nav>
+
+
+
+<!-- PRODUCT CONTENT -->
+<div id="product-content" class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+  <!-- Loading skeleton -->
+  <div id="product-skeleton" class="grid lg:grid-cols-2 gap-12 lg:gap-16">
+    <div class="space-y-3">
+      <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+      <div class="grid grid-cols-4 gap-2">
+        <div class="aspect-square bg-stone-light rounded-xl animate-pulse"></div>
+        <div class="aspect-square bg-stone-light rounded-xl animate-pulse"></div>
+        <div class="aspect-square bg-stone-light rounded-xl animate-pulse"></div>
+        <div class="aspect-square bg-stone-light rounded-xl animate-pulse"></div>
+      </div>
+    </div>
+    <div class="space-y-5 py-4">
+      <div class="h-5 bg-stone-light rounded animate-pulse w-1/3"></div>
+      <div class="h-10 bg-stone-light rounded animate-pulse"></div>
+      <div class="h-10 bg-stone-light rounded animate-pulse w-3/4"></div>
+      <div class="h-4 bg-stone-light rounded animate-pulse w-1/4"></div>
+      <div class="h-16 bg-stone-light rounded animate-pulse"></div>
+      <div class="h-14 bg-stone-light rounded-xl animate-pulse"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RELATED PRODUCTS -->
+<section class="py-16 bg-stone-light/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <h2 class="font-display text-3xl mb-8">You May Also Like</h2>
+    <div id="related-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6"></div>
+  </div>
+</section>
+
+<!-- FOOTER MINIMAL -->
+<footer class="bg-ink text-white py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <a href="../index.html" class="font-display text-xl">Anon</a>
+    <p class="text-white/40 text-xs">© 2025 Anon Marketplace</p>
+    <div class="flex gap-4 text-xs text-white/40">
+      <a href="#" class="hover:text-white transition-colors">Privacy</a>
+      <a href="#" class="hover:text-white transition-colors">Terms</a>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/js/api.js"></script>
+<script>
+/* ─── Helpers ────────────────────────────────────────────────── */
+function showToast(msg, type='success') {
+  const t=document.getElementById('app-toast'),icon=document.getElementById('toast-icon'),m=document.getElementById('toast-msg');
+  m.textContent=msg; const s={success:['bg-ink text-white','checkmark-circle-outline'],error:['bg-red-600 text-white','alert-circle-outline'],info:['bg-accent text-white','information-circle-outline']};
+  const[cls,ico]=s[type]||s.success; t.className=`fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium max-w-xs ${cls}`; icon.name=ico;
+  t.style.cssText='opacity:1;transform:translateY(0);pointer-events:auto;transition:all .3s';
+  clearTimeout(t._t); t._t=setTimeout(()=>{t.style.cssText='opacity:0;pointer-events:none;transition:all .3s';},3200);
+}
+function formatPrice(n){return '$'+Number(n||0).toFixed(2);}
+function starHTML(r,big=false){const s=big?'text-base':'text-xs';const full=Math.floor(r),half=r%1>=.5;return Array.from({length:5},(_,i)=>`<ion-icon name="${i<full?'star':(i===full&&half?'star-half':'star-outline')}" class="text-accent ${s}"></ion-icon>`).join('');}
+
+let currentProduct = null;
+let selectedQty = 1;
+let selectedVariant = '';
+
+/* ─── Load product ───────────────────────────────────────────── */
+async function loadProduct() {
+  const id = new URLSearchParams(location.search).get('id');
+  if (!id) { window.location.href = 'shop.html'; return; }
+
+  try {
+    const { product } = await Products.get(id);
+    currentProduct = product;
+    document.title = `${product.name} — Anon`;
+    renderProduct(product);
+    loadRelated(product.category?._id, product._id);
+  } catch(e) {
+    document.getElementById('product-skeleton').innerHTML = `
+      <div class="col-span-full text-center py-20">
+        <ion-icon name="alert-circle-outline" class="text-5xl text-ink/20 mb-4"></ion-icon>
+        <p class="text-ink/40 mb-6">${e.message}</p>
+        <a href="shop.html" class="bg-ink text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-ink/80 transition-colors">Back to Shop</a>
+      </div>`;
+  }
+}
+
+function renderProduct(p) {
+  const disc = p.comparePrice > p.price ? Math.round(((p.comparePrice-p.price)/p.comparePrice)*100) : 0;
+  const allImages = p.images?.length ? p.images : [p.thumbnail || 'https://placehold.co/600x600/f5f5f4/a8a29e?text=Product'];
+
+  const html = `
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-xs text-ink/40 mb-8">
+    <a href="../index.html" class="hover:text-ink transition-colors">Home</a>
+    <ion-icon name="chevron-forward-outline" class="text-xs"></ion-icon>
+    <a href="shop.html" class="hover:text-ink transition-colors">Shop</a>
+    <ion-icon name="chevron-forward-outline" class="text-xs"></ion-icon>
+    <a href="shop.html?category=${p.category?._id}" class="hover:text-ink transition-colors">${p.category?.name || ''}</a>
+    <ion-icon name="chevron-forward-outline" class="text-xs"></ion-icon>
+    <span class="text-ink/70 truncate max-w-[200px]">${p.name}</span>
+  </nav>
+
+  <div class="grid lg:grid-cols-2 gap-10 lg:gap-16">
+    <!-- Images -->
+    <div class="space-y-3">
+      <div class="relative aspect-square bg-stone-light rounded-2xl overflow-hidden">
+        <img id="main-image" src="${allImages[0]}" alt="${p.name}" class="w-full h-full object-cover">
+        ${disc ? `<div class="absolute top-4 left-4 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full">-${disc}%</div>` : ''}
+        <button id="wishlist-btn" onclick="toggleWishlist('${p._id}', this)"
+          class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-stone-light transition-colors">
+          <ion-icon name="heart-outline" class="text-lg text-ink/70"></ion-icon>
+        </button>
+      </div>
+      ${allImages.length > 1 ? `
+      <div class="grid grid-cols-4 gap-2">
+        ${allImages.map((img, i) => `
+          <button onclick="switchImage('${img}', this)"
+            class="thumb-img aspect-square rounded-xl overflow-hidden border-2 ${i===0?'border-ink':'border-transparent'} hover:border-ink/40 transition-all">
+            <img src="${img}" alt="" class="w-full h-full object-cover">
+          </button>`).join('')}
+      </div>` : ''}
+    </div>
+
+    <!-- Details -->
+    <div class="space-y-6 lg:py-4">
+      <!-- Vendor & category -->
+      <div class="flex items-center gap-3">
+        <a href="vendor.html?slug=${p.vendor?.slug}" class="flex items-center gap-2 group">
+          <img src="${p.vendor?.logo || 'https://placehold.co/32x32/f5f5f4/a8a29e?text=V'}"
+            class="w-8 h-8 rounded-full object-cover ring-1 ring-stone-mid group-hover:ring-accent transition-all" alt="${p.vendor?.storeName}">
+          <span class="text-xs font-medium text-ink/60 group-hover:text-accent transition-colors">${p.vendor?.storeName || ''}</span>
+        </a>
+        <span class="text-stone-mid">·</span>
+        <a href="shop.html?category=${p.category?._id}" class="text-xs text-ink/40 hover:text-accent transition-colors">${p.category?.name || ''}</a>
+      </div>
+
+      <!-- Title -->
+      <h1 class="font-display text-3xl lg:text-4xl leading-tight">${p.name}</h1>
+
+      <!-- Rating -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-0.5">${starHTML(p.rating || 0, true)}</div>
+        <span class="text-sm font-medium">${Number(p.rating || 0).toFixed(1)}</span>
+        <span class="text-sm text-ink/40">(${p.numReviews || 0} reviews)</span>
+        <span class="text-stone-mid">·</span>
+        <span class="text-sm ${p.stock > 0 ? 'text-emerald-600' : 'text-red-500'} font-medium">
+          ${p.stock > 0 ? `In Stock (${p.stock})` : 'Out of Stock'}
+        </span>
+      </div>
+
+      <!-- Price -->
+      <div class="flex items-baseline gap-4 py-2">
+        <span class="font-display text-4xl">${formatPrice(p.price)}</span>
+        ${p.comparePrice > p.price ? `
+          <span class="text-lg text-ink/30 line-through">${formatPrice(p.comparePrice)}</span>
+          <span class="text-sm font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Save ${disc}%</span>` : ''}
+      </div>
+
+      <!-- Description -->
+      <p class="text-sm text-ink/70 leading-relaxed">${p.shortDescription || p.description?.substring(0, 200) + '…'}</p>
+
+      <!-- Variants -->
+      ${p.variants?.length ? `
+      <div>
+        <p class="text-xs uppercase tracking-wider font-medium text-ink/50 mb-3">Options</p>
+        <div class="flex flex-wrap gap-2" id="variants-group">
+          ${p.variants.map(v => `
+            <button onclick="selectVariant('${v.name}', this)"
+              class="variant-btn px-4 py-2 rounded-full border border-stone-mid text-sm hover:border-ink transition-colors">
+              ${v.name}
+            </button>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- Tags -->
+      ${p.tags?.length ? `
+      <div class="flex flex-wrap gap-2">
+        ${p.tags.map(tag => `<span class="text-xs text-ink/50 bg-stone-light px-3 py-1 rounded-full">${tag}</span>`).join('')}
+      </div>` : ''}
+
+      <!-- Qty + Add to cart -->
+      <div class="flex gap-3 pt-2">
+        <div class="flex items-center gap-3 border border-stone-mid rounded-full px-4 py-3">
+          <button onclick="changeQty(-1)" class="w-5 h-5 flex items-center justify-center text-ink/60 hover:text-ink transition-colors text-base leading-none">−</button>
+          <span id="qty-display" class="font-medium text-sm w-6 text-center">1</span>
+          <button onclick="changeQty(1)" class="w-5 h-5 flex items-center justify-center text-ink/60 hover:text-ink transition-colors text-base leading-none">+</button>
+        </div>
+        <button id="add-to-cart-btn" onclick="addToCartNow()" ${p.stock === 0 ? 'disabled' : ''}
+          class="flex-1 bg-ink text-white rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-ink/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed py-3">
+          <ion-icon name="bag-add-outline"></ion-icon>
+          ${p.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+        </button>
+        <button onclick="toggleWishlist('${p._id}', document.getElementById('wishlist-btn'))"
+          class="w-12 h-12 rounded-full border border-stone-mid flex items-center justify-center text-ink/60 hover:text-ink hover:border-ink transition-all">
+          <ion-icon name="heart-outline" class="text-lg"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="grid grid-cols-3 gap-3 pt-2">
+        <div class="flex items-center gap-2 text-xs text-ink/50">
+          <ion-icon name="car-outline" class="text-accent text-base flex-shrink-0"></ion-icon>
+          <span>Free shipping over $55</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-ink/50">
+          <ion-icon name="refresh-outline" class="text-accent text-base flex-shrink-0"></ion-icon>
+          <span>Free 30-day returns</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-ink/50">
+          <ion-icon name="shield-checkmark-outline" class="text-accent text-base flex-shrink-0"></ion-icon>
+          <span>Secure checkout</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full description + reviews tabs -->
+  <div class="mt-16 border-t border-stone-mid pt-12">
+    <div class="flex gap-8 border-b border-stone-mid mb-10">
+      <button data-ptab="description" onclick="switchTab('description')" class="product-tab pb-4 text-sm font-medium border-b-2 border-ink">Description</button>
+      <button data-ptab="specs" onclick="switchTab('specs')" class="product-tab pb-4 text-sm font-medium border-b-2 border-transparent text-ink/40">Specifications</button>
+      <button data-ptab="reviews" onclick="switchTab('reviews')" class="product-tab pb-4 text-sm font-medium border-b-2 border-transparent text-ink/40">
+        Reviews <span class="text-xs bg-stone-light px-2 py-0.5 rounded-full ml-1">${p.numReviews || 0}</span>
+      </button>
+    </div>
+
+    <!-- Description tab -->
+    <div id="tab-description" class="product-tab-content max-w-3xl">
+      <div class="prose prose-sm text-ink/70 leading-relaxed text-sm space-y-4">
+        <p>${p.description || 'No description available.'}</p>
+      </div>
+    </div>
+
+    <!-- Specs tab -->
+    <div id="tab-specs" class="product-tab-content hidden max-w-2xl">
+      <dl class="divide-y divide-stone-mid">
+        ${p.weight ? `<div class="flex py-3"><dt class="w-40 text-sm text-ink/50 flex-shrink-0">Weight</dt><dd class="text-sm">${p.weight}g</dd></div>` : ''}
+        ${p.sku ? `<div class="flex py-3"><dt class="w-40 text-sm text-ink/50 flex-shrink-0">SKU</dt><dd class="text-sm font-mono text-xs">${p.sku}</dd></div>` : ''}
+        ${p.attributes?.map(a => `<div class="flex py-3"><dt class="w-40 text-sm text-ink/50 flex-shrink-0">${a.name}</dt><dd class="text-sm">${a.values?.join(', ')}</dd></div>`).join('') || ''}
+        ${!p.weight && !p.sku && !p.attributes?.length ? '<p class="text-sm text-ink/40 py-4">No specifications available.</p>' : ''}
+      </dl>
+    </div>
+
+    <!-- Reviews tab -->
+    <div id="tab-reviews" class="product-tab-content hidden">
+      <div class="grid lg:grid-cols-3 gap-10">
+        <!-- Summary -->
+        <div class="lg:col-span-1">
+          <div class="bg-stone-light rounded-2xl p-6 text-center">
+            <div class="font-display text-6xl mb-2">${Number(p.rating || 0).toFixed(1)}</div>
+            <div class="flex justify-center gap-0.5 mb-2">${starHTML(p.rating || 0, true)}</div>
+            <p class="text-sm text-ink/50">${p.numReviews || 0} reviews</p>
+          </div>
+          <!-- Add review form -->
+          <div id="review-form-section" class="mt-6">
+            <h3 class="font-medium text-sm mb-4">Write a Review</h3>
+            <div id="review-login-prompt" class="hidden">
+              <p class="text-xs text-ink/50 mb-3">You must be logged in and have purchased this product to leave a review.</p>
+              <button onclick="openAuth('login')" class="text-sm text-ink font-medium hover:underline">Log in →</button>
+            </div>
+            <form id="review-form" class="space-y-4 hidden">
+              <div>
+                <p class="text-xs text-ink/50 mb-2 uppercase tracking-wider">Your Rating</p>
+                <div class="flex gap-1" id="star-picker">
+                  ${[1,2,3,4,5].map(i=>`<button type="button" data-star="${i}" onclick="setRating(${i})"
+                    class="star-pick text-2xl text-stone-mid hover:text-accent transition-colors">
+                    <ion-icon name="star-outline"></ion-icon></button>`).join('')}
+                </div>
+                <input type="hidden" id="review-rating" value="0">
+              </div>
+              <div>
+                <textarea id="review-comment" rows="3" placeholder="Share your experience…"
+                  class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors resize-none"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-ink text-white py-3 rounded-xl text-sm font-medium hover:bg-ink/80 transition-colors">
+                Submit Review
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Reviews list -->
+        <div class="lg:col-span-2 space-y-6" id="reviews-list">
+          ${p.reviews?.length ? p.reviews.map(r => `
+            <div class="border-b border-stone-mid/50 pb-6 last:border-0">
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-full bg-ink text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    ${r.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">${r.name || 'Anonymous'}</p>
+                    <p class="text-xs text-ink/40">${new Date(r.createdAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</p>
+                  </div>
+                </div>
+                <div class="flex gap-0.5">${starHTML(r.rating)}</div>
+              </div>
+              <p class="text-sm text-ink/70 leading-relaxed">${r.comment}</p>
+            </div>`).join('') : '<p class="text-sm text-ink/40 py-4">No reviews yet. Be the first to review this product!</p>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('product-skeleton').outerHTML = `<div id="product-main" class="animate-fade-up">${html}</div>`;
+  setupReviewForm(p._id);
+}
+
+/* ─── Image switcher ─────────────────────────────────────────── */
+function switchImage(src, btn) {
+  document.getElementById('main-image').src = src;
+  document.querySelectorAll('.thumb-img').forEach(b => b.classList.replace('border-ink','border-transparent'));
+  btn.classList.replace('border-transparent','border-ink');
+}
+
+/* ─── Quantity ───────────────────────────────────────────────── */
+function changeQty(delta) {
+  const max = currentProduct?.stock || 99;
+  selectedQty = Math.min(Math.max(1, selectedQty + delta), max);
+  document.getElementById('qty-display').textContent = selectedQty;
+}
+
+/* ─── Variant ────────────────────────────────────────────────── */
+function selectVariant(name, btn) {
+  selectedVariant = name;
+  document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('bg-ink','text-white','border-ink'));
+  btn.classList.add('bg-ink','text-white','border-ink');
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────── */
+function switchTab(name) {
+  document.querySelectorAll('.product-tab').forEach(t => {
+    const active = t.dataset.ptab === name;
+    t.classList.toggle('border-ink', active);
+    t.classList.toggle('border-transparent', !active);
+    t.classList.toggle('text-ink/40', !active);
+  });
+  document.querySelectorAll('.product-tab-content').forEach(c => c.classList.add('hidden'));
+  document.getElementById('tab-' + name)?.classList.remove('hidden');
+}
+
+/* ─── Reviews ────────────────────────────────────────────────── */
+let selectedRating = 0;
+function setRating(n) {
+  selectedRating = n;
+  document.getElementById('review-rating').value = n;
+  document.querySelectorAll('.star-pick').forEach((btn, i) => {
+    btn.querySelector('ion-icon').name = i < n ? 'star' : 'star-outline';
+    btn.classList.toggle('text-accent', i < n);
+    btn.classList.toggle('text-stone-mid', i >= n);
+  });
+}
+
+function setupReviewForm(productId) {
+  const user = Auth.getUser();
+  if (!user) {
+    document.getElementById('review-login-prompt').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('review-form').classList.remove('hidden');
+  document.getElementById('review-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!selectedRating) { showToast('Please select a star rating', 'info'); return; }
+    const comment = document.getElementById('review-comment').value.trim();
+    if (!comment) { showToast('Please write a comment', 'info'); return; }
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Submitting…'; btn.disabled = true;
+    try {
+      await Reviews.add(productId, { rating: selectedRating, comment });
+      showToast('Review submitted! Thank you.');
+      setTimeout(() => window.location.reload(), 1200);
+    } catch(err) { showToast(err.message, 'error'); btn.textContent = 'Submit Review'; btn.disabled = false; }
+  });
+}
+
+/* ─── Cart ───────────────────────────────────────────────────── */
+function openAuth(tab='login') { window.location.href = `../index.html#auth-${tab}`; }
+
+
+async function refreshBadge() {
+  if (!Auth.isLoggedIn()) return;
+  try {
+    const { cart } = await Cart.get();
+    const n = cart?.items?.length || 0;
+    ['cart-badge','mobile-cart-badge'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.textContent = n; b.classList.toggle('opacity-0', n === 0); }
+    });
+    const cb = document.getElementById('cart-count-badge');
+    if (cb) cb.textContent = `(${n})`;
+  } catch {}
+}
+
+async function addToCartNow() {
+  if (!Auth.isLoggedIn()) { openAuth('login'); return; }
+  const btn = document.getElementById('add-to-cart-btn');
+  btn.innerHTML = '<ion-icon name="sync-outline" class="animate-spin"></ion-icon> Adding…';
+  btn.disabled = true;
+  try {
+    await Cart.add(currentProduct._id, selectedQty, selectedVariant);
+    showToast('Added to cart!');
+    refreshBadge();
+    openCart();
+  } catch(e) { showToast(e.message, 'error'); }
+  finally { btn.innerHTML = '<ion-icon name="bag-add-outline"></ion-icon> Add to Cart'; btn.disabled = false; }
+}
+
+async function toggleWishlist(pid, btn) {
+  if (!Auth.isLoggedIn()) { openAuth('login'); return; }
+  try {
+    await Users.toggleWishlist(pid);
+    const icon = btn?.querySelector('ion-icon');
+    if (icon) icon.name = icon.name === 'heart' ? 'heart-outline' : 'heart';
+    showToast('Wishlist updated');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function openCart() {
+  document.getElementById('cart-sidebar').classList.remove('translate-x-full');
+  document.getElementById('cart-overlay-bg').classList.remove('opacity-0','pointer-events-none');
+  await renderCart();
+}
+function closeCart() {
+  document.getElementById('cart-sidebar').classList.add('translate-x-full');
+  document.getElementById('cart-overlay-bg').classList.add('opacity-0','pointer-events-none');
+}
+
+async function renderCart() {
+  const body = document.getElementById('cart-body');
+  const sub = document.getElementById('cart-subtotal');
+  if (!Auth.isLoggedIn()) { body.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-3 text-ink/40 py-12"><ion-icon name="bag-outline" class="text-5xl"></ion-icon><p class="text-sm">Log in to view your cart</p></div>`; return; }
+  body.innerHTML = `<div class="text-center py-8 text-ink/30 text-sm">Loading…</div>`;
+  try {
+    const { cart, subtotal } = await Cart.get();
+    if (!cart?.items?.length) { body.innerHTML=`<div class="flex flex-col items-center justify-center h-full gap-3 text-ink/40 py-12"><ion-icon name="bag-outline" class="text-5xl"></ion-icon><p class="text-sm">Cart is empty</p></div>`; if(sub)sub.textContent='$0.00'; return; }
+    body.innerHTML = cart.items.map(i=>`<div class="flex gap-3 items-start"><img src="${i.product?.thumbnail||''}" class="w-16 h-16 rounded-xl object-cover bg-stone-light flex-shrink-0" alt=""><div class="flex-1 min-w-0"><p class="text-sm font-medium truncate">${i.product?.name||'Product'}</p><p class="text-xs text-ink/40 mb-1.5">${i.vendor?.storeName||''}</p><div class="flex items-center gap-1.5 border border-stone-mid rounded-full px-1 w-fit"><button onclick="updateItem('${i._id}',${i.quantity-1})" class="w-6 h-6 flex items-center justify-center text-ink/60 hover:text-ink text-base leading-none">−</button><span class="text-xs w-4 text-center">${i.quantity}</span><button onclick="updateItem('${i._id}',${i.quantity+1})" class="w-6 h-6 flex items-center justify-center text-ink/60 hover:text-ink text-base leading-none">+</button></div></div><div class="flex flex-col items-end gap-2"><span class="font-display text-base">$${(i.price*i.quantity).toFixed(2)}</span><button onclick="removeItem('${i._id}')" class="text-ink/25 hover:text-red-500 transition-colors"><ion-icon name="trash-outline" class="text-sm"></ion-icon></button></div></div>`).join('');
+    if(sub) sub.textContent='$'+Number(subtotal).toFixed(2);
+  } catch {}
+}
+async function updateItem(id,qty){if(qty<=0)return removeItem(id);try{await Cart.update(id,qty);await renderCart();refreshBadge();}catch(e){showToast(e.message,'error');}}
+async function removeItem(id){try{await Cart.remove(id);await renderCart();refreshBadge();}catch(e){showToast(e.message,'error');}}
+
+/* ─── Related products ───────────────────────────────────────── */
+async function loadRelated(categoryId, excludeId) {
+  if (!categoryId) return;
+  try {
+    const { products } = await Products.list({ category: categoryId, limit: 4 });
+    const filtered = products.filter(p => p._id !== excludeId).slice(0, 4);
+    const grid = document.getElementById('related-grid');
+    if (!filtered.length || !grid) return;
+    const formatP = n => '$'+Number(n||0).toFixed(2);
+    const starsR = r => Array.from({length:5},(_,i)=>`<ion-icon name="${i<Math.floor(r)?'star':'star-outline'}" class="text-accent text-xs"></ion-icon>`).join('');
+    grid.innerHTML = filtered.map(p=>`
+      <div class="product-card group bg-white rounded-2xl overflow-hidden border border-stone-mid/50 hover:border-stone-mid hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="window.location.href='product.html?id=${p._id}'">
+        <div class="relative overflow-hidden aspect-square bg-stone-light">
+          <img src="${p.thumbnail||'https://placehold.co/400x400/f5f5f4/a8a29e?text=Product'}" alt="${p.name}" class="product-thumb w-full h-full object-cover">
+          <div class="absolute bottom-3 inset-x-3 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+            <button onclick="event.stopPropagation();addToCartNowById('${p._id}')" class="w-full bg-ink text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1.5 hover:bg-ink/80 transition-colors">
+              <ion-icon name="bag-add-outline"></ion-icon> Add to Cart
+            </button>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="text-sm font-medium mb-1.5 line-clamp-2 group-hover:text-accent transition-colors">${p.name}</h3>
+          <div class="flex items-center gap-1 mb-2">${starsR(p.rating||0)}</div>
+          <span class="font-display text-lg">${formatP(p.price)}</span>
+        </div>
+      </div>`).join('');
+  } catch {}
+}
+
+async function addToCartNowById(pid) {
+  if (!Auth.isLoggedIn()) { openAuth('login'); return; }
+  try { await Cart.add(pid, 1, ''); showToast('Added to cart!'); refreshBadge(); openCart(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+
+/* ─── Nav ────────────────────────────────────────────────────── */
+function updateNav() {
+  const user = Auth.getUser();
+  document.getElementById('login-btn-nav').classList.toggle('hidden', !!user);
+  const um = document.getElementById('user-menu');
+  um.classList.toggle('hidden', !user);
+  um.classList.toggle('flex', !!user);
+  if (user) {
+    document.getElementById('user-avatar-init').textContent = user.name?.charAt(0)?.toUpperCase() || 'U';
+    document.getElementById('user-name-nav').textContent = user.name?.split(' ')[0];
+  }
+}
+
+/* ─── Wire up ────────────────────────────────────────────────── */
+document.getElementById('cart-btn').addEventListener('click', openCart);
+document.getElementById('cart-close').addEventListener('click', closeCart);
+document.getElementById('cart-overlay-bg').addEventListener('click', closeCart);
+document.getElementById('login-btn-nav').addEventListener('click', () => openAuth('login'));
+document.getElementById('logout-btn').addEventListener('click', Auth.logout);
+document.getElementById('checkout-btn').addEventListener('click', () => { closeCart(); window.location.href = 'checkout.html'; });
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateNav();
+  refreshBadge();
+  loadProduct();
+});
+
+/* ─── Mobile nav ─────────────────────────────────────────────── */
+(function() {
+  function initMobileNav() {
+    // Mobile search toggle
+    const toggle = document.getElementById('mobile-search-toggle');
+    const bar = document.getElementById('mobile-search-bar');
+    if (toggle && bar) {
+      toggle.addEventListener('click', () => {
+        bar.classList.toggle('hidden');
+        if (!bar.classList.contains('hidden')) document.getElementById('search-input-mobile')?.focus();
+      });
+    }
+    document.getElementById('search-form-mobile')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = document.getElementById('search-input-mobile')?.value.trim();
+      if (q) window.location.href = 'shop.html?q=' + encodeURIComponent(q);
+    });
+
+    // Mobile cart btn — open the sidebar
+    document.getElementById('mobile-cart-btn')?.addEventListener('click', () => {
+      if (typeof openCart === 'function') {
+        openCart();
+      } else {
+        const sidebar = document.getElementById('cart-sidebar');
+        const overlay = document.getElementById('cart-overlay-bg');
+        if (sidebar) sidebar.classList.remove('translate-x-full');
+        if (overlay) overlay.classList.remove('opacity-0', 'pointer-events-none');
+      }
+    });
+
+    // Active nav item highlight
+    const path = window.location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('#mobile-bottom-nav .mobile-nav-item').forEach(el => {
+      const href = el.getAttribute('href') || '';
+      if (href && path && href.includes(path.replace('.html', ''))) el.classList.add('active');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMobileNav);
+  else initMobileNav();
+})();
+
+</script>
+</body>
+</html>

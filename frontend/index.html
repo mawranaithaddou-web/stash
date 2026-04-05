@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anon — Modern Marketplace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body: ['"DM Sans"', 'sans-serif'],
+          },
+          colors: {
+            ink: { DEFAULT: '#0d0d0d', soft: '#1a1a1a', muted: '#6b7280' },
+            stone: { light: '#f5f5f4', mid: '#e7e5e4', dark: '#a8a29e' },
+            accent: { DEFAULT: '#c9a96e', light: '#f0e6d3', dark: '#a07840' },
+          },
+          animation: {
+            'fade-up': 'fadeUp .4s ease forwards',
+            'slide-in-right': 'slideInRight .35s ease forwards',
+          },
+          keyframes: {
+            fadeUp: { from: { opacity: 0, transform: 'translateY(16px)' }, to: { opacity: 1, transform: 'none' } },
+            slideInRight: { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'DM Serif Display', serif; }
+    /* Cart sidebar */
+    #cart-sidebar { transition: transform .35s cubic-bezier(.4,0,.2,1); }
+    /* Auth modal */
+    #auth-modal { transition: opacity .2s; }
+    /* Toast */
+    #app-toast { transition: all .3s cubic-bezier(.4,0,.2,1); }
+    /* Product card hover image zoom */
+    .product-card:hover .product-thumb { transform: scale(1.06); }
+    .product-thumb { transition: transform .5s cubic-bezier(.4,0,.2,1); }
+    /* Underline nav animation */
+    .nav-link::after { content:''; display:block; height:1px; background:currentColor; transform:scaleX(0); transition:transform .25s; transform-origin:left; }
+    .nav-link:hover::after { transform:scaleX(1); }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#d6d3d1; border-radius:99px; }
+  </style>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body class="bg-white text-ink font-body antialiased">
+
+<!-- ═══════════════════ TOAST ═══════════════════ -->
+<div id="app-toast" class="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium translate-y-4 opacity-0 pointer-events-none max-w-xs">
+  <ion-icon id="toast-icon" name="checkmark-circle-outline" class="text-lg flex-shrink-0"></ion-icon>
+  <span id="toast-msg">Message</span>
+</div>
+
+<!-- ═══════════════════ AUTH MODAL ═══════════════════ -->
+<div id="auth-modal" class="fixed inset-0 z-[900] flex items-center justify-center opacity-0 pointer-events-none">
+  <div id="auth-overlay" class="absolute inset-0 bg-ink/50 backdrop-blur-sm"></div>
+  <div class="relative z-10 bg-white rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl animate-fade-up">
+    <button id="auth-close" class="absolute top-5 right-5 text-stone-dark hover:text-ink transition-colors">
+      <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+    </button>
+    <h2 class="font-display text-2xl mb-1">Welcome to <em>Anon</em></h2>
+    <p class="text-sm text-ink/50 mb-6">Your modern multi-vendor marketplace</p>
+    <!-- Tabs -->
+    <div class="flex border-b border-stone-mid mb-6">
+      <button data-tab="login" class="auth-tab flex-1 pb-3 text-sm font-medium border-b-2 border-ink transition-colors">Log In</button>
+      <button data-tab="register" class="auth-tab flex-1 pb-3 text-sm font-medium border-b-2 border-transparent text-ink/40 transition-colors">Register</button>
+    </div>
+    <!-- Login -->
+    <form id="login-form" class="auth-form space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-ink/60 mb-1.5 uppercase tracking-wider">Email</label>
+        <input type="email" name="email" required placeholder="you@example.com"
+          class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-ink/60 mb-1.5 uppercase tracking-wider">Password</label>
+        <input type="password" name="password" required placeholder="••••••••"
+          class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+      </div>
+      <button type="submit" id="login-btn" class="w-full bg-ink text-white py-3.5 rounded-xl text-sm font-medium hover:bg-ink/80 transition-colors mt-2">
+        Log In
+      </button>
+      <p class="text-center text-xs text-ink/50">No account? <button type="button" onclick="switchAuthTab('register')" class="text-ink font-medium hover:underline">Register here</button></p>
+    </form>
+    <!-- Register -->
+    <form id="register-form" class="auth-form hidden space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-ink/60 mb-1.5 uppercase tracking-wider">Full Name</label>
+        <input type="text" name="fullname" required placeholder="John Doe"
+          class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-ink/60 mb-1.5 uppercase tracking-wider">Email</label>
+        <input type="email" name="email" required placeholder="you@example.com"
+          class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-ink/60 mb-1.5 uppercase tracking-wider">Password</label>
+        <input type="password" name="password" required placeholder="Min 6 characters" minlength="6"
+          class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-ink/60 mb-1.5 uppercase tracking-wider">I want to…</label>
+        <select name="role" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none transition-colors">
+          <option value="buyer">Shop — Buy products</option>
+          <option value="vendor">Sell — List my products</option>
+        </select>
+      </div>
+      <button type="submit" id="register-btn" class="w-full bg-ink text-white py-3.5 rounded-xl text-sm font-medium hover:bg-ink/80 transition-colors mt-2">
+        Create Account
+      </button>
+      <p class="text-center text-xs text-ink/50">Have an account? <button type="button" onclick="switchAuthTab('login')" class="text-ink font-medium hover:underline">Log in</button></p>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ CART SIDEBAR ═══════════════════ -->
+<div id="cart-overlay-bg" class="fixed inset-0 z-[800] bg-ink/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+<aside id="cart-sidebar" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[850] flex flex-col translate-x-full shadow-2xl">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-stone-mid">
+    <h2 class="font-display text-xl">Cart <span id="cart-count-badge" class="text-sm font-body font-normal text-ink/40">(0)</span></h2>
+    <button id="cart-close" class="text-ink/40 hover:text-ink transition-colors">
+      <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+    </button>
+  </div>
+  <div id="cart-body" class="flex-1 overflow-y-auto px-6 py-4 space-y-4"></div>
+  <div class="px-6 py-5 border-t border-stone-mid space-y-4">
+    <div class="flex justify-between items-center">
+      <span class="text-sm text-ink/60">Subtotal</span>
+      <span id="cart-subtotal" class="font-display text-xl">$0.00</span>
+    </div>
+    <p class="text-xs text-ink/40">Shipping & taxes calculated at checkout</p>
+    <button id="checkout-btn" class="w-full bg-ink text-white py-4 rounded-xl text-sm font-medium hover:bg-ink/80 transition-colors flex items-center justify-center gap-2">
+      <ion-icon name="lock-closed-outline"></ion-icon> Proceed to Checkout
+    </button>
+    <a href="pages/shop.html" class="block text-center text-xs text-ink/50 hover:text-ink transition-colors">or Continue Shopping →</a>
+  </div>
+</aside>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="sticky top-0 z-[500] bg-white/95 backdrop-blur border-b border-stone-mid">
+  <!-- Top strip -->
+  <div class="bg-ink text-white text-xs text-center py-2 font-light tracking-wide">
+    Free shipping on orders over $55 · <a href="pages/shop.html" class="underline underline-offset-2 opacity-70 hover:opacity-100">Shop Now</a>
+  </div>
+  <!-- Main nav -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
+    <!-- Logo -->
+    <a href="index.html" class="font-display text-2xl tracking-tight flex-shrink-0">Anon</a>
+
+    <!-- Desktop nav -->
+    <nav class="hidden lg:flex items-center gap-7 ml-4 flex-1">
+      <a href="index.html" class="nav-link text-sm font-medium">Home</a>
+      <div class="relative group">
+        <button class="nav-link text-sm font-medium flex items-center gap-1">
+          Shop <ion-icon name="chevron-down-outline" class="text-xs mt-0.5"></ion-icon>
+        </button>
+        <div class="absolute top-full left-0 pt-4 hidden group-hover:block">
+          <div class="bg-white border border-stone-mid rounded-xl shadow-xl p-5 w-56 space-y-1">
+            <a href="pages/shop.html" class="block px-3 py-2 text-sm rounded-lg hover:bg-stone-light transition-colors">All Products</a>
+            <div id="nav-categories" class="space-y-1"></div>
+          </div>
+        </div>
+      </div>
+      <a href="pages/shop.html?sort=newest" class="nav-link text-sm font-medium">New In</a>
+      <a href="pages/shop.html?featured=true" class="nav-link text-sm font-medium">Featured</a>
+      <a href="pages/vendors.html" class="nav-link text-sm font-medium">Vendors</a>
+    </nav>
+
+    <!-- Search -->
+    <div class="flex-1 max-w-xs hidden md:block">
+      <form id="search-form" class="relative">
+        <input id="search-input" type="search" placeholder="Search products…"
+          class="w-full pl-10 pr-4 py-2.5 bg-stone-light rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-all">
+        <ion-icon name="search-outline" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40 text-base"></ion-icon>
+      </form>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-1 ml-auto">
+      <!-- Logged-out -->
+      <button id="login-btn-nav" class="hidden lg:flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full border border-stone-mid hover:border-ink transition-colors">
+        <ion-icon name="person-outline"></ion-icon> Log In
+      </button>
+      <!-- Logged-in user menu -->
+      <div id="user-menu" class="hidden items-center gap-1">
+        <a id="nav-account-link" href="pages/account.html" class="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-stone-light transition-colors text-sm font-medium">
+          <div class="w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center text-xs font-bold" id="user-avatar-init">A</div>
+          <span id="user-name-nav" class="hidden sm:block"></span>
+        </a>
+        <a id="nav-vendor-link" href="pages/vendor-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Vendor Dashboard">
+          <ion-icon name="storefront-outline" class="text-lg"></ion-icon>
+        </a>
+        <a id="nav-admin-link" href="pages/admin-dashboard.html" class="hidden p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Admin">
+          <ion-icon name="settings-outline" class="text-lg"></ion-icon>
+        </a>
+        <button id="logout-btn" class="p-2 rounded-full hover:bg-stone-light transition-colors text-ink/60 hover:text-ink" title="Logout">
+          <ion-icon name="log-out-outline" class="text-lg"></ion-icon>
+        </button>
+      </div>
+      <!-- Wishlist -->
+      <a href="pages/account.html#wishlist" class="p-2 rounded-full hover:bg-stone-light transition-colors relative">
+        <ion-icon name="heart-outline" class="text-lg text-ink/70"></ion-icon>
+      </a>
+      <!-- Cart -->
+      <button id="cart-btn" class="p-2 rounded-full hover:bg-stone-light transition-colors relative">
+        <ion-icon name="bag-handle-outline" class="text-lg text-ink/70"></ion-icon>
+        <span id="cart-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+      </button>
+      <!-- Mobile menu -->
+      <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-full hover:bg-stone-light transition-colors">
+        <ion-icon name="menu-outline" class="text-xl"></ion-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile nav -->
+  <div id="mobile-menu" class="lg:hidden hidden border-t border-stone-mid bg-white px-4 pb-4 space-y-1">
+    <a href="index.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">Home</a>
+    <a href="pages/shop.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">Shop</a>
+    <a href="pages/shop.html?sort=newest" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">New In</a>
+    <a href="pages/account.html" class="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-stone-light">My Account</a>
+    <form id="search-form-mobile" class="pt-2">
+      <input id="search-input-mobile" type="search" placeholder="Search products…"
+        class="w-full px-4 py-2.5 bg-stone-light rounded-full text-sm focus:outline-none">
+    </form>
+  </div>
+</header>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="relative overflow-hidden bg-stone-light">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-20 lg:py-28 grid lg:grid-cols-2 gap-12 items-center">
+    <div class="space-y-7 animate-fade-up">
+      <span class="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-accent border border-accent/30 bg-accent/5 px-4 py-1.5 rounded-full">
+        New Season Arrivals
+      </span>
+<!-- Hero Section -->
+<h1 id="cms-hero-title" class="font-display text-5xl lg:text-6xl xl:text-7xl leading-tight">
+  Discover<br><em>Thousands</em> of<br>Curated Products
+</h1>
+<p id="cms-hero-subtitle" class="text-base text-ink/60 max-w-md leading-relaxed">
+  Shop from hundreds of independent vendors. Find unique products you won't see anywhere else.
+</p>
+      <div class="flex flex-wrap gap-3 pt-2">
+        <a href="pages/shop.html" class="inline-flex items-center gap-2 bg-ink text-white px-7 py-3.5 rounded-full text-sm font-medium hover:bg-ink/80 transition-colors">
+          Shop Now <ion-icon name="arrow-forward-outline"></ion-icon>
+        </a>
+        <a href="pages/shop.html?featured=true" class="inline-flex items-center gap-2 border border-stone-mid px-7 py-3.5 rounded-full text-sm font-medium hover:border-ink transition-colors">
+          View Featured
+        </a>
+      </div>
+      <div class="flex items-center gap-6 pt-2 text-sm text-ink/50">
+        <div class="flex items-center gap-2"><ion-icon name="checkmark-circle-outline" class="text-accent"></ion-icon> Free returns</div>
+        <div class="flex items-center gap-2"><ion-icon name="shield-checkmark-outline" class="text-accent"></ion-icon> Secure checkout</div>
+        <div class="flex items-center gap-2"><ion-icon name="car-outline" class="text-accent"></ion-icon> Fast shipping</div>
+      </div>
+    </div>
+    <div class="relative hidden lg:block">
+      <div class="aspect-[4/5] bg-stone-mid rounded-3xl overflow-hidden">
+        <div class="w-full h-full bg-gradient-to-br from-stone-mid to-stone-dark/20 flex items-center justify-center">
+          <div class="text-center space-y-2 text-stone-dark/50">
+            <ion-icon name="image-outline" class="text-6xl"></ion-icon>
+            <p class="text-sm">Hero Image</p>
+          </div>
+        </div>
+      </div>
+      <!-- Floating product card -->
+      <div class="absolute -left-8 bottom-16 bg-white rounded-2xl p-4 shadow-xl w-48 animate-fade-up" style="animation-delay:.2s">
+        <div class="text-xs text-ink/50 mb-1">Best Seller</div>
+        <div class="font-medium text-sm truncate">Rose Gold Earrings</div>
+        <div class="font-display text-lg mt-1">$29.99</div>
+        <div class="flex gap-0.5 mt-1.5">
+          <ion-icon name="star" class="text-accent text-xs"></ion-icon>
+          <ion-icon name="star" class="text-accent text-xs"></ion-icon>
+          <ion-icon name="star" class="text-accent text-xs"></ion-icon>
+          <ion-icon name="star" class="text-accent text-xs"></ion-icon>
+          <ion-icon name="star-half" class="text-accent text-xs"></ion-icon>
+        </div>
+      </div>
+      <!-- Stats badge -->
+      <div class="absolute -right-4 top-12 bg-ink text-white rounded-2xl p-4 shadow-xl animate-fade-up" style="animation-delay:.35s">
+        <div class="font-display text-2xl">2K+</div>
+        <div class="text-xs text-white/60 mt-0.5">Products</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CATEGORIES ═══════════════════ -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+  <div class="flex items-end justify-between mb-10">
+    <div>
+      <p class="text-xs uppercase tracking-widest text-accent font-medium mb-2">Browse</p>
+      <h2 class="font-display text-3xl lg:text-4xl">Shop by Category</h2>
+    </div>
+    <a href="pages/shop.html" class="hidden sm:flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink transition-colors">
+      All categories <ion-icon name="arrow-forward-outline"></ion-icon>
+    </a>
+  </div>
+  <div id="categories-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <!-- Skeleton -->
+    <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+    <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+    <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+    <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+    <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+    <div class="aspect-square bg-stone-light rounded-2xl animate-pulse"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ FEATURED PRODUCTS ═══════════════════ -->
+<section class="py-16 bg-stone-light/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex items-end justify-between mb-10">
+      <div>
+        <p class="text-xs uppercase tracking-widest text-accent font-medium mb-2">Handpicked</p>
+        <h2 class="font-display text-3xl lg:text-4xl">Featured Products</h2>
+      </div>
+      <a href="pages/shop.html?featured=true" class="hidden sm:flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink transition-colors">
+        View all <ion-icon name="arrow-forward-outline"></ion-icon>
+      </a>
+    </div>
+    <div id="featured-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+      <!-- Skeletons -->
+      <div class="bg-white rounded-2xl overflow-hidden"><div class="aspect-square bg-stone-light animate-pulse"></div><div class="p-4 space-y-2"><div class="h-4 bg-stone-light rounded animate-pulse"></div><div class="h-3 bg-stone-light rounded w-2/3 animate-pulse"></div></div></div>
+      <div class="bg-white rounded-2xl overflow-hidden"><div class="aspect-square bg-stone-light animate-pulse"></div><div class="p-4 space-y-2"><div class="h-4 bg-stone-light rounded animate-pulse"></div><div class="h-3 bg-stone-light rounded w-2/3 animate-pulse"></div></div></div>
+      <div class="bg-white rounded-2xl overflow-hidden"><div class="aspect-square bg-stone-light animate-pulse"></div><div class="p-4 space-y-2"><div class="h-4 bg-stone-light rounded animate-pulse"></div><div class="h-3 bg-stone-light rounded w-2/3 animate-pulse"></div></div></div>
+      <div class="bg-white rounded-2xl overflow-hidden"><div class="aspect-square bg-stone-light animate-pulse"></div><div class="p-4 space-y-2"><div class="h-4 bg-stone-light rounded animate-pulse"></div><div class="h-3 bg-stone-light rounded w-2/3 animate-pulse"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PROMO BANNER ═══════════════════ -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+  <div class="bg-ink rounded-3xl p-10 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8">
+    <div class="text-white text-center lg:text-left">
+      <p class="text-accent text-sm uppercase tracking-widest font-medium mb-3">Limited Time</p>
+     <h2 id="cms-promo-title" class="font-display text-4xl lg:text-5xl text-white mb-3">Up to <em>40% Off</em></h2>
+<p id="cms-promo-subtitle" class="text-white/60 text-base">On selected electronics and fashion items this week only.</p>
+    </div>
+    <a href="pages/shop.html?sort=price_asc" class="flex-shrink-0 inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-full text-sm font-medium transition-colors">
+      Shop the Sale <ion-icon name="arrow-forward-outline"></ion-icon>
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════ NEW ARRIVALS ═══════════════════ -->
+<section class="py-16 bg-stone-light/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex items-end justify-between mb-10">
+      <div>
+        <p class="text-xs uppercase tracking-widest text-accent font-medium mb-2">Just Landed</p>
+        <h2 class="font-display text-3xl lg:text-4xl">New Arrivals</h2>
+      </div>
+      <a href="pages/shop.html?sort=newest" class="hidden sm:flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink transition-colors">
+        See all <ion-icon name="arrow-forward-outline"></ion-icon>
+      </a>
+    </div>
+    <div id="new-arrivals-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ TOP RATED ═══════════════════ -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+  <div class="flex items-end justify-between mb-10">
+    <div>
+      <p class="text-xs uppercase tracking-widest text-accent font-medium mb-2">Customer Favourites</p>
+      <h2 class="font-display text-3xl lg:text-4xl">Top Rated</h2>
+    </div>
+    <a href="pages/shop.html?sort=rating" class="hidden sm:flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink transition-colors">
+      See all <ion-icon name="arrow-forward-outline"></ion-icon>
+    </a>
+  </div>
+  <div id="top-rated-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6"></div>
+</section>
+
+<!-- ═══════════════════ VENDORS STRIP ═══════════════════ -->
+<section class="py-16 bg-stone-light/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-10">
+      <p class="text-xs uppercase tracking-widest text-accent font-medium mb-2">Our Sellers</p>
+      <h2 class="font-display text-3xl lg:text-4xl">Top Vendors</h2>
+    </div>
+    <div id="vendors-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ NEWSLETTER ═══════════════════ -->
+<section class="py-20 max-w-7xl mx-auto px-4 sm:px-6">
+  <div class="border border-stone-mid rounded-3xl p-10 lg:p-16 flex flex-col lg:flex-row items-center gap-10">
+    <div class="flex-1 text-center lg:text-left">
+      <h2 class="font-display text-3xl lg:text-4xl mb-3">Stay in the Loop</h2>
+      <p class="text-ink/60 text-base">Subscribe for new arrivals, vendor spotlights, and exclusive deals.</p>
+    </div>
+    <form id="newsletter-form" class="flex-1 w-full max-w-md">
+      <div class="flex gap-2">
+        <input type="email" id="nl-email" required placeholder="Enter your email address"
+          class="flex-1 px-5 py-3.5 bg-stone-light rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-all">
+        <button type="submit" class="bg-ink text-white px-6 py-3.5 rounded-full text-sm font-medium hover:bg-ink/80 transition-colors flex-shrink-0">
+          Subscribe
+        </button>
+      </div>
+      <p class="text-xs text-ink/40 mt-3 text-center lg:text-left">No spam, unsubscribe any time.</p>
+    </form>
+  </div>
+</section>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="bg-ink text-white py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+      <div class="col-span-2 lg:col-span-1">
+        <div class="font-display text-2xl mb-4">Anon</div>
+        <p class="text-white/50 text-sm leading-relaxed">Your modern multi-vendor marketplace for unique products.</p>
+        <div class="flex gap-3 mt-5">
+          <a href="#" class="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"><ion-icon name="logo-instagram" class="text-sm"></ion-icon></a>
+          <a href="#" class="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"><ion-icon name="logo-twitter" class="text-sm"></ion-icon></a>
+          <a href="#" class="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"><ion-icon name="logo-facebook" class="text-sm"></ion-icon></a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xs uppercase tracking-widest text-white/40 mb-4">Shop</h4>
+        <ul class="space-y-2.5 text-sm text-white/70">
+          <li><a href="pages/shop.html" class="hover:text-white transition-colors">All Products</a></li>
+          <li><a href="pages/shop.html?sort=newest" class="hover:text-white transition-colors">New Arrivals</a></li>
+          <li><a href="pages/shop.html?featured=true" class="hover:text-white transition-colors">Featured</a></li>
+          <li><a href="pages/shop.html?sort=popular" class="hover:text-white transition-colors">Best Sellers</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-xs uppercase tracking-widest text-white/40 mb-4">Account</h4>
+        <ul class="space-y-2.5 text-sm text-white/70">
+          <li><a href="pages/account.html" class="hover:text-white transition-colors">My Account</a></li>
+          <li><a href="pages/account.html#orders" class="hover:text-white transition-colors">My Orders</a></li>
+          <li><a href="pages/account.html#wishlist" class="hover:text-white transition-colors">Wishlist</a></li>
+          <li><a href="pages/vendor-dashboard.html" class="hover:text-white transition-colors">Sell on Anon</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-xs uppercase tracking-widest text-white/40 mb-4">Support</h4>
+        <ul class="space-y-2.5 text-sm text-white/70">
+          <li><a href="#" class="hover:text-white transition-colors">Help Center</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Shipping Info</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Contact Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-xs uppercase tracking-widest text-white/40 mb-4">Contact</h4>
+<!-- Footer Contact Section -->
+<ul class="space-y-2.5 text-sm text-white/70">
+  <li id="cms-contact-address" class="flex items-start gap-2"><ion-icon name="location-outline" class="text-accent mt-0.5 flex-shrink-0"></ion-icon> 419 State 414 Rte, New York</li>
+  <li id="cms-contact-phone" class="flex items-center gap-2"><ion-icon name="call-outline" class="text-accent flex-shrink-0"></ion-icon> (607) 936-8058</li>
+  <li id="cms-contact-email" class="flex items-center gap-2"><ion-icon name="mail-outline" class="text-accent flex-shrink-0"></ion-icon> <a href="mailto:hello@anon.com" class="hover:text-white transition-colors">hello@anon.com</a></li>
+</ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-xs text-white/40">© 2025 Anon Marketplace. All rights reserved.</p>
+      <div class="flex gap-5 text-xs text-white/40">
+        <a href="#" class="hover:text-white transition-colors">Privacy</a>
+        <a href="#" class="hover:text-white transition-colors">Terms</a>
+        <a href="#" class="hover:text-white transition-colors">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+<script src="assets/js/api.js"></script>
+<script>
+  /* ─── Helpers ────────────────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('app-toast');
+  const icon = document.getElementById('toast-icon');
+  const msgEl = document.getElementById('toast-msg');
+  msgEl.textContent = msg;
+  const styles = {
+    success: ['bg-ink text-white', 'checkmark-circle-outline'],
+    error:   ['bg-red-600 text-white', 'alert-circle-outline'],
+    info:    ['bg-accent text-white', 'information-circle-outline'],
+    warning: ['bg-amber-500 text-white', 'warning-outline'],
+  };
+  const [cls, ico] = styles[type] || styles.success;
+  t.className = `fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium max-w-xs ${cls}`;
+  icon.name = ico;
+  t.style.cssText = 'opacity:1;transform:translateY(0);pointer-events:auto;transition:all .3s';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.cssText = 'opacity:0;transform:translateY(1rem);pointer-events:none;transition:all .3s'; }, 3200);
+}
+
+function formatPrice(n) { return '$' + Number(n || 0).toFixed(2); }
+
+function starHTML(r) {
+  const full = Math.floor(r), half = r % 1 >= 0.5;
+  return Array.from({length:5}, (_,i) =>
+    `<ion-icon name="${i < full ? 'star' : (i === full && half ? 'star-half' : 'star-outline')}" class="text-accent text-xs"></ion-icon>`
+  ).join('');
+}
+
+function productCardHTML(p) {
+  const disc = p.comparePrice > p.price ? Math.round(((p.comparePrice - p.price) / p.comparePrice) * 100) : 0;
+  return `
+  <div class="product-card group bg-white rounded-2xl overflow-hidden border border-stone-mid/50 hover:border-stone-mid hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="goProduct('${p._id}')">
+    <div class="relative overflow-hidden aspect-square bg-stone-light">
+      <img src="${p.thumbnail || 'https://placehold.co/400x400/f5f5f4/a8a29e?text=Product'}"
+           alt="${p.name}" class="product-thumb w-full h-full object-cover">
+      ${disc ? `<span class="absolute top-3 left-3 bg-accent text-white text-[10px] font-bold px-2 py-1 rounded-full">-${disc}%</span>` : ''}
+      <div class="absolute inset-0 bg-ink/0 group-hover:bg-ink/5 transition-colors duration-300"></div>
+      <div class="absolute bottom-3 inset-x-3 flex gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+        <button onclick="event.stopPropagation();addToCart('${p._id}')"
+          class="flex-1 bg-ink text-white text-xs font-medium py-2.5 rounded-xl hover:bg-ink/80 transition-colors flex items-center justify-center gap-1.5">
+          <ion-icon name="bag-add-outline"></ion-icon> Add to Cart
+        </button>
+        <button onclick="event.stopPropagation();toggleWishlist('${p._id}', this)"
+          class="bg-white text-ink w-10 rounded-xl flex items-center justify-center hover:bg-stone-light transition-colors">
+          <ion-icon name="heart-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+    <div class="p-4">
+      <p class="text-[11px] uppercase tracking-wider text-accent font-medium mb-1">${p.category?.name || ''}</p>
+      <h3 class="text-sm font-medium leading-snug mb-1.5 line-clamp-2 group-hover:text-accent transition-colors">${p.name}</h3>
+      <div class="flex items-center gap-1 mb-2">${starHTML(p.rating || 0)}<span class="text-[11px] text-ink/40 ml-1">(${p.numReviews || 0})</span></div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="font-display text-lg">${formatPrice(p.price)}</span>
+          ${p.comparePrice > p.price ? `<span class="text-xs text-ink/30 line-through">${formatPrice(p.comparePrice)}</span>` : ''}
+        </div>
+        <p class="text-[11px] text-ink/40 truncate max-w-[80px]">${p.vendor?.storeName || ''}</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function goProduct(id) { window.location.href = `pages/product.html?id=${id}`; }
+
+/* ─── Cart ───────────────────────────────────────────────────── */
+async function refreshBadge() {
+  if (!Auth.isLoggedIn()) return;
+  try {
+    const { cart } = await Cart.get();
+    const n = cart?.items?.length || 0;
+    const b = document.getElementById('cart-badge');
+    b.textContent = n;
+    b.classList.toggle('opacity-0', n === 0);
+    document.getElementById('cart-count-badge').textContent = `(${n})`;
+  } catch {}
+}
+
+// In index.html script section
+
+async function loadSiteContent() {
+  try {
+    // Use the Site object from api.js
+    const res = await Site.getContent(); 
+    
+    if(res.success && res.content) {
+      const c = res.content;
+      
+      // Helper to safely set HTML
+      const setHtml = (id, html) => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = html;
+      };
+      
+      // Helper to safely set Text (specifically for list items with icons)
+      const setListText = (id, text, iconName) => {
+        const el = document.getElementById(id);
+        if(el) {
+            // Reconstruct the HTML to keep the Ionicon
+            el.innerHTML = `<ion-icon name="${iconName}" class="text-accent mt-0.5 flex-shrink-0"></ion-icon> ${text}`;
+        }
+      };
+
+      // Update DOM
+      setHtml('cms-hero-title', c.heroTitle);
+      setHtml('cms-hero-subtitle', c.heroSubtitle);
+      setHtml('cms-promo-title', c.promoTitle);
+      setHtml('cms-promo-subtitle', c.promoSubtitle);
+      
+      setListText('cms-contact-address', c.contactAddress, 'location-outline');
+      setListText('cms-contact-phone', c.contactPhone, 'call-outline');
+      setListText('cms-contact-email', c.contactEmail, 'mail-outline');
+    }
+  } catch (e) {
+    console.log("Using default content (CMS load failed or not implemented)", e);
+  }
+}
+// Update DOMContentLoaded
+
+
+async function openCart() {
+  document.getElementById('cart-sidebar').classList.remove('translate-x-full');
+  document.getElementById('cart-overlay-bg').classList.remove('opacity-0', 'pointer-events-none');
+  await renderCart();
+}
+function closeCart() {
+  document.getElementById('cart-sidebar').classList.add('translate-x-full');
+  document.getElementById('cart-overlay-bg').classList.add('opacity-0', 'pointer-events-none');
+}
+
+async function renderCart() {
+  const body = document.getElementById('cart-body');
+  const sub = document.getElementById('cart-subtotal');
+  if (!Auth.isLoggedIn()) {
+    body.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-4 text-ink/40 py-16">
+      <ion-icon name="bag-outline" class="text-5xl"></ion-icon>
+      <p class="text-sm">Log in to view your cart</p>
+      <button onclick="closeCart();openAuth('login')" class="bg-ink text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-ink/80 transition-colors">Log In</button>
+    </div>`;
+    return;
+  }
+  body.innerHTML = `<div class="text-center py-8 text-ink/30 text-sm">Loading…</div>`;
+  try {
+    const { cart, subtotal } = await Cart.get();
+    if (!cart?.items?.length) {
+      body.innerHTML = `<div class="flex flex-col items-center justify-center h-full gap-3 text-ink/40 py-16">
+        <ion-icon name="bag-outline" class="text-5xl"></ion-icon>
+        <p class="text-sm">Your cart is empty</p>
+        <a href="pages/shop.html" onclick="closeCart()" class="text-ink text-sm font-medium hover:underline">Start shopping →</a>
+      </div>`;
+      if (sub) sub.textContent = '$0.00';
+      return;
+    }
+    body.innerHTML = cart.items.map(item => `
+      <div class="flex gap-4 items-start">
+        <img src="${item.product?.thumbnail || ''}" alt="${item.product?.name || ''}"
+          class="w-20 h-20 rounded-xl object-cover bg-stone-light flex-shrink-0">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium leading-snug mb-0.5 truncate">${item.product?.name || 'Product'}</p>
+          <p class="text-xs text-ink/40 mb-2">${item.vendor?.storeName || ''}</p>
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 border border-stone-mid rounded-full px-1">
+              <button onclick="updateItem('${item._id}',${item.quantity-1})" class="w-6 h-6 flex items-center justify-center text-ink/60 hover:text-ink text-base leading-none transition-colors">−</button>
+              <span class="text-sm w-5 text-center">${item.quantity}</span>
+              <button onclick="updateItem('${item._id}',${item.quantity+1})" class="w-6 h-6 flex items-center justify-center text-ink/60 hover:text-ink text-base leading-none transition-colors">+</button>
+            </div>
+            <span class="font-display text-base ml-auto">${formatPrice(item.price * item.quantity)}</span>
+          </div>
+        </div>
+        <button onclick="removeItem('${item._id}')" class="text-ink/25 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5">
+          <ion-icon name="trash-outline" class="text-base"></ion-icon>
+        </button>
+      </div>`).join('');
+    if (sub) sub.textContent = formatPrice(subtotal);
+  } catch(e) { body.innerHTML = `<p class="text-sm text-red-500 text-center py-8">${e.message}</p>`; }
+}
+
+async function addToCart(pid, qty=1, variant='') {
+  if (!Auth.isLoggedIn()) { openAuth('login'); showToast('Please log in to add to cart', 'info'); return; }
+  try {
+    await Cart.add(pid, qty, variant);
+    showToast('Added to cart!');
+    refreshBadge();
+    openCart();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function updateItem(id, qty) {
+  if (qty <= 0) return removeItem(id);
+  try { await Cart.update(id, qty); await renderCart(); refreshBadge(); } catch(e) { showToast(e.message, 'error'); }
+}
+async function removeItem(id) {
+  try { await Cart.remove(id); await renderCart(); refreshBadge(); showToast('Removed from cart', 'info'); } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function toggleWishlist(pid, btn) {
+  if (!Auth.isLoggedIn()) { openAuth('login'); return; }
+  try {
+    await Users.toggleWishlist(pid);
+    const icon = btn.querySelector('ion-icon');
+    if (icon) icon.name = icon.name === 'heart' ? 'heart-outline' : 'heart';
+    showToast('Wishlist updated');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+/* ─── Auth Modal ─────────────────────────────────────────────── */
+function openAuth(tab = 'login') {
+  const m = document.getElementById('auth-modal');
+  m.classList.remove('opacity-0', 'pointer-events-none');
+  switchAuthTab(tab);
+}
+function closeAuth() {
+  const m = document.getElementById('auth-modal');
+  m.classList.add('opacity-0', 'pointer-events-none');
+}
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => {
+    const active = t.dataset.tab === tab;
+    t.classList.toggle('border-ink', active);
+    t.classList.toggle('border-transparent', !active);
+    t.classList.toggle('text-ink/40', !active);
+  });
+  document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+}
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Logging in…'; btn.disabled = true;
+  try {
+    const { token, user } = await Auth.login({ email: e.target.email.value, password: e.target.password.value });
+    Auth.saveSession(token, user);
+    updateNav(); refreshBadge(); closeAuth();
+    showToast(`Welcome back, ${user.name.split(' ')[0]}!`);
+    setTimeout(() => {
+      if (user.role === 'admin') window.location.href = 'pages/admin-dashboard.html';
+      else if (user.role === 'vendor') window.location.href = 'pages/vendor-dashboard.html';
+    }, 800);
+  } catch(err) { showToast(err.message, 'error'); }
+  finally { btn.textContent = 'Log In'; btn.disabled = false; }
+});
+
+document.getElementById('register-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('register-btn');
+  btn.textContent = 'Creating…'; btn.disabled = true;
+  try {
+    const { token, user } = await Auth.register({
+      name: e.target.fullname.value, email: e.target.email.value,
+      password: e.target.password.value, role: e.target.role.value,
+    });
+    Auth.saveSession(token, user);
+    updateNav(); refreshBadge(); closeAuth();
+    showToast(`Welcome, ${user.name.split(' ')[0]}!`);
+  } catch(err) { showToast(err.message, 'error'); }
+  finally { btn.textContent = 'Create Account'; btn.disabled = false; }
+});
+
+/* ─── Nav ────────────────────────────────────────────────────── */
+function updateNav() {
+  const user = Auth.getUser();
+  document.getElementById('login-btn-nav').classList.toggle('hidden', !!user);
+  const um = document.getElementById('user-menu');
+  um.classList.toggle('hidden', !user);
+  um.classList.toggle('flex', !!user);
+  if (user) {
+    const init = user.name?.charAt(0)?.toUpperCase() || 'U';
+    document.getElementById('user-avatar-init').textContent = init;
+    document.getElementById('user-name-nav').textContent = user.name?.split(' ')[0];
+    document.getElementById('nav-vendor-link').classList.toggle('hidden', user.role !== 'vendor');
+    document.getElementById('nav-admin-link').classList.toggle('hidden', user.role !== 'admin');
+  }
+}
+
+/* ─── CMS Content Loader ─────────────────────────────────────── */
+async function loadSiteContent() {
+  try {
+    const { content } = await api.get('/content');
+
+    const heroTitle = document.getElementById('cms-hero-title');
+    if (heroTitle && content.heroTitle) heroTitle.innerHTML = content.heroTitle;
+
+    const heroSub = document.getElementById('cms-hero-subtitle');
+    if (heroSub && content.heroSubtitle) heroSub.textContent = content.heroSubtitle;
+
+    const promoTitle = document.getElementById('cms-promo-title');
+    if (promoTitle && content.promoTitle) promoTitle.innerHTML = content.promoTitle;
+
+    const promoSub = document.getElementById('cms-promo-subtitle');
+    if (promoSub && content.promoSubtitle) promoSub.textContent = content.promoSubtitle;
+
+    const addrEl = document.getElementById('cms-contact-address');
+    if (addrEl && content.contactAddress) {
+      addrEl.innerHTML = `<ion-icon name="location-outline" class="text-accent mt-0.5 flex-shrink-0"></ion-icon> ${content.contactAddress}`;
+    }
+    const phoneEl = document.getElementById('cms-contact-phone');
+    if (phoneEl && content.contactPhone) {
+      phoneEl.innerHTML = `<ion-icon name="call-outline" class="text-accent flex-shrink-0"></ion-icon> ${content.contactPhone}`;
+    }
+    const emailEl = document.getElementById('cms-contact-email');
+    if (emailEl && content.contactEmail) {
+      emailEl.innerHTML = `<ion-icon name="mail-outline" class="text-accent flex-shrink-0"></ion-icon> <a href="mailto:${content.contactEmail}" class="hover:text-white transition-colors">${content.contactEmail}</a>`;
+    }
+  } catch (e) {
+    console.warn('CMS content unavailable, using defaults:', e.message);
+  }
+}
+
+/* ─── Page data loaders ──────────────────────────────────────── */
+async function loadCategories() {
+  try {
+    const { categories } = await Categories.list();
+    const grid = document.getElementById('categories-grid');
+    const navCats = document.getElementById('nav-categories');
+    const icons = ['shirt-outline','phone-portrait-outline','diamond-outline','color-palette-outline','footsteps-outline','grid-outline'];
+    grid.innerHTML = categories.map((c, i) => `
+      <a href="pages/shop.html?category=${c._id}" class="group aspect-square bg-stone-light rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-accent/10 hover:border-accent/30 border border-transparent transition-all duration-300">
+        <ion-icon name="${icons[i] || 'grid-outline'}" class="text-3xl text-ink/40 group-hover:text-accent transition-colors"></ion-icon>
+        <span class="text-xs font-medium text-ink/70 group-hover:text-accent transition-colors">${c.name}</span>
+      </a>`).join('');
+    navCats.innerHTML = categories.map(c =>
+      `<a href="pages/shop.html?category=${c._id}" class="block px-3 py-2 text-sm rounded-lg hover:bg-stone-light transition-colors">${c.name}</a>`
+    ).join('');
+  } catch {}
+}
+
+async function loadProductSection(endpoint, gridId, params = {}) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  try {
+    let data;
+    if (endpoint === 'featured') data = await Products.featured();
+    else data = await Products.list({ limit: 8, ...params });
+    grid.innerHTML = (data.products || []).map(productCardHTML).join('');
+  } catch(e) {
+    if (grid) grid.innerHTML = `<p class="col-span-full text-center text-ink/30 py-8 text-sm">${e.message}</p>`;
+  }
+}
+
+async function loadVendors() {
+  try {
+    const { vendors } = await Vendors.list({ limit: 4 });
+    const grid = document.getElementById('vendors-grid');
+    if (!grid) return;
+    grid.innerHTML = vendors.map(v => `
+      <a href="pages/vendor.html?slug=${v.slug}" class="group bg-white rounded-2xl p-6 border border-stone-mid/50 hover:border-stone-mid hover:shadow-md transition-all text-center">
+        <div class="w-16 h-16 rounded-full bg-stone-light overflow-hidden mx-auto mb-4 ring-2 ring-stone-mid group-hover:ring-accent transition-all">
+          <img src="${v.logo || 'https://placehold.co/64x64/f5f5f4/a8a29e?text=V'}" class="w-full h-full object-cover" alt="${v.storeName}">
+        </div>
+        <h3 class="text-sm font-medium mb-1">${v.storeName}</h3>
+        <p class="text-xs text-ink/40">${v.numReviews || 0} reviews</p>
+      </a>`).join('');
+  } catch {}
+}
+
+/* ─── Search ─────────────────────────────────────────────────── */
+['search-form','search-form-mobile'].forEach(id => {
+  document.getElementById(id)?.addEventListener('submit', e => {
+    e.preventDefault();
+    const q = document.getElementById(id === 'search-form' ? 'search-input' : 'search-input-mobile')?.value?.trim();
+    if (q) window.location.href = `pages/shop.html?q=${encodeURIComponent(q)}`;
+  });
+});
+
+/* ─── Newsletter ─────────────────────────────────────────────── */
+document.getElementById('newsletter-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = document.getElementById('nl-email').value;
+  try {
+    const res = await Newsletter.subscribe(email);
+    showToast(res.message);
+    e.target.reset();
+  } catch(err) { showToast(err.message, 'error'); }
+});
+
+/* ─── Mobile menu ────────────────────────────────────────────── */
+document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+  document.getElementById('mobile-menu').classList.toggle('hidden');
+});
+
+/* ─── Wire up buttons ────────────────────────────────────────── */
+document.getElementById('login-btn-nav').addEventListener('click', () => openAuth('login'));
+document.getElementById('auth-overlay').addEventListener('click', closeAuth);
+document.getElementById('auth-close').addEventListener('click', closeAuth);
+document.querySelectorAll('.auth-tab').forEach(t => t.addEventListener('click', () => switchAuthTab(t.dataset.tab)));
+document.getElementById('cart-btn').addEventListener('click', openCart);
+document.getElementById('cart-close').addEventListener('click', closeCart);
+document.getElementById('cart-overlay-bg').addEventListener('click', closeCart);
+document.getElementById('logout-btn').addEventListener('click', Auth.logout);
+document.getElementById('checkout-btn').addEventListener('click', () => { closeCart(); window.location.href = 'pages/checkout.html'; });
+
+/* ─── Init ───────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  updateNav();
+  refreshBadge();
+  loadSiteContent();
+  loadCategories();
+  loadProductSection('featured', 'featured-grid');
+  loadProductSection('new', 'new-arrivals-grid', { sort: 'newest', limit: 8 });
+  loadProductSection('top', 'top-rated-grid', { sort: 'rating', limit: 8 });
+  loadVendors();
+});
+</script>
+</body>
+</html>

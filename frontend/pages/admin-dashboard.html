@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Anon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body: ['"DM Sans"', 'sans-serif'],
+          },
+          colors: {
+            ink: { DEFAULT: '#0d0d0d', soft: '#1a1a1a', muted: '#6b7280' },
+            stone: { light: '#f5f5f4', mid: '#e7e5e4', dark: '#a8a29e' },
+            accent: { DEFAULT: '#c9a96e', light: '#f0e6d3', dark: '#a07840' },
+          },
+          animation: {
+            'fade-up': 'fadeUp .4s ease forwards',
+          },
+          keyframes: {
+            fadeUp: { from: { opacity: 0, transform: 'translateY(12px)' }, to: { opacity: 1, transform: 'none' } },
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .font-display { font-family: 'DM Serif Display', serif; }
+    
+    /* Panel Logic */
+    .dash-panel { display: none; }
+    .dash-panel.active { display: block; animation: fadeUp 0.4s ease forwards; }
+    
+    /* Navigation Active State */
+    .dash-nav-item.active { @apply bg-white/10 text-accent border-r-4 border-accent; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #e7e5e4; border-radius: 10px; }
+
+    /* Toggle Switch Styles */
+    .toggle-checkbox:checked { right: 0; border-color: #c9a96e; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #c9a96e; }
+  </style>
+</head>
+<body class="bg-stone-light text-ink font-body antialiased min-h-screen flex">
+
+<!-- ═══════════════════ TOAST ═══════════════════ -->
+<div id="app-toast" class="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium translate-y-4 opacity-0 pointer-events-none max-w-xs transition-all duration-300">
+  <ion-icon id="toast-icon" name="checkmark-circle-outline" class="text-lg flex-shrink-0"></ion-icon>
+  <span id="toast-msg" class="toast-message-text">Message</span>
+</div>
+
+<!-- ── Sidebar ───────────────────────────────────────────────────── -->
+<aside id="dash-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-ink text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl">
+  <div class="p-8">
+    <a href="../index.html" class="font-display text-3xl tracking-tight">Anon</a>
+    <div class="mt-2 text-[10px] uppercase tracking-[0.2em] text-accent font-bold">Admin Console</div>
+  </div>
+
+  <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+    <a href="#overview" class="dash-nav-item active flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5" data-panel="overview">
+      <ion-icon name="grid-outline" class="text-lg"></ion-icon> Overview
+    </a>
+    <a href="#vendors" class="dash-nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5" data-panel="vendors">
+      <ion-icon name="storefront-outline" class="text-lg"></ion-icon> Vendors
+    </a>
+    <a href="#users" class="dash-nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5" data-panel="users">
+      <ion-icon name="people-outline" class="text-lg"></ion-icon> Users
+    </a>
+    <a href="#products" class="dash-nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5" data-panel="products">
+      <ion-icon name="cube-outline" class="text-lg"></ion-icon> Products
+    </a>
+    <a href="#orders" class="dash-nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5" data-panel="orders">
+      <ion-icon name="receipt-outline" class="text-lg"></ion-icon> Orders
+    </a>
+    <a href="#content" class="dash-nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5" data-panel="content">
+  <ion-icon name="brush-outline" class="text-lg"></ion-icon> Content & Settings
+</a>
+  </nav>
+
+  <div class="p-4 border-t border-white/5 space-y-1">
+    <a href="../index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white/40 hover:text-white transition-colors">
+      <ion-icon name="home-outline" class="text-lg"></ion-icon> Live Store
+    </a>
+    <button id="admin-logout-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400/70 hover:text-red-400 hover:bg-red-400/10 transition-colors">
+      <ion-icon name="log-out-outline" class="text-lg"></ion-icon> Logout
+    </button>
+  </div>
+</aside>
+
+<!-- ── Main Area ─────────────────────────────────────────────────── -->
+<main class="flex-1 lg:ml-64 flex flex-col min-h-screen">
+  
+  <!-- Topbar -->
+  <header class="h-20 bg-white border-b border-stone-mid flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40">
+    <div class="flex items-center gap-4">
+      <button id="sidebar-toggle" class="lg:hidden p-2 text-ink/50 hover:text-ink"><ion-icon name="menu-outline" class="text-2xl"></ion-icon></button>
+      <h1 id="dash-page-title" class="font-display text-2xl">Overview</h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="text-right hidden sm:block">
+        <p id="admin-name-display" class="text-sm font-bold"></p>
+        <p class="text-[10px] text-accent uppercase tracking-widest font-bold italic">Master Admin</p>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-stone-light border border-stone-mid flex items-center justify-center font-bold text-ink">A</div>
+    </div>
+  </header>
+
+  <div class="p-6 lg:p-10 flex-1 space-y-8">
+    
+    <!-- ── Overview Panel ────────────────────────────────────────── -->
+    <section class="dash-panel active space-y-8" id="panel-overview">
+      <div id="admin-stats-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <!-- Skeleton Stats -->
+        <div class="bg-white h-28 rounded-2xl border border-stone-mid animate-pulse"></div>
+        <div class="bg-white h-28 rounded-2xl border border-stone-mid animate-pulse"></div>
+        <div class="bg-white h-28 rounded-2xl border border-stone-mid animate-pulse"></div>
+        <div class="bg-white h-28 rounded-2xl border border-stone-mid animate-pulse"></div>
+        <div class="bg-white h-28 rounded-2xl border border-stone-mid animate-pulse"></div>
+        <div class="bg-white h-28 rounded-2xl border border-stone-mid animate-pulse"></div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-stone-mid">
+          <h3 class="font-display text-xl mb-8">Platform Revenue</h3>
+          <div id="admin-revenue-chart" class="flex items-end gap-3 h-48 px-2"></div>
+        </div>
+        <div class="bg-ink text-white p-8 rounded-[2rem] flex flex-col justify-between overflow-hidden relative">
+          <div class="relative z-10">
+            <h3 class="font-display text-2xl mb-4 text-accent">Vendor Requests</h3>
+            <p class="text-white/40 text-sm leading-relaxed mb-6">There are new artisans waiting for your approval to join the collective.</p>
+            <button onclick="switchPanel('vendors')" class="text-xs font-bold uppercase tracking-widest bg-white/10 hover:bg-accent hover:text-white px-6 py-3 rounded-xl transition-all">Review Requests</button>
+          </div>
+          <ion-icon name="storefront" class="absolute -bottom-6 -right-6 text-9xl text-white/5"></ion-icon>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-[2rem] border border-stone-mid overflow-hidden">
+        <div class="p-8 border-b border-stone-mid flex items-center justify-between">
+          <h3 class="font-display text-xl">Recent Activity</h3>
+          <a href="#orders" onclick="switchPanel('orders')" class="text-[10px] font-bold uppercase tracking-widest text-accent hover:underline">Full Report</a>
+        </div>
+        <div id="admin-recent-orders" class="divide-y divide-stone-mid/50"></div>
+      </div>
+    </section>
+
+    <!-- ── Vendors Panel ─────────────────────────────────────────── -->
+    <section class="dash-panel space-y-6" id="panel-vendors">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-stone-mid">
+        <h2 class="font-display text-2xl">Merchant Management</h2>
+        <div class="flex items-center gap-3">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-ink/40">Filter</span>
+            <select id="vendor-status-filter" class="bg-stone-light rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-widest focus:outline-none">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending Review</option>
+                <option value="approved">Approved</option>
+                <option value="suspended">Suspended</option>
+            </select>
+        </div>
+      </div>
+      <div class="bg-white rounded-[2rem] border border-stone-mid overflow-hidden overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-[10px] uppercase tracking-[0.2em] text-ink/30 border-b border-stone-mid bg-stone-light/30 font-bold">
+              <th class="px-8 py-5">Store Identity</th>
+              <th class="px-8 py-5">Owner</th>
+              <th class="px-8 py-5">Status</th>
+              <th class="px-8 py-5">Joined</th>
+              <th class="px-8 py-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-vendors-tbody" class="text-sm divide-y divide-stone-mid/30"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Users Panel ───────────────────────────────────────────── -->
+    <section class="dash-panel space-y-6" id="panel-users">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-stone-mid">
+        <h2 class="font-display text-2xl">Member Directory</h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative">
+            <input type="search" id="user-search" placeholder="Search accounts..." class="pl-10 pr-4 py-2 bg-stone-light rounded-xl text-xs font-medium w-64 focus:outline-none focus:ring-1 focus:ring-accent">
+            <ion-icon name="search-outline" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/30"></ion-icon>
+          </div>
+          <select id="user-role-filter" class="bg-stone-light rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-widest focus:outline-none">
+            <option value="">All Roles</option>
+            <option value="buyer">Buyers</option>
+            <option value="vendor">Vendors</option>
+            <option value="admin">Admins</option>
+          </select>
+        </div>
+      </div>
+      <div class="bg-white rounded-[2rem] border border-stone-mid overflow-hidden overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-[10px] uppercase tracking-[0.2em] text-ink/30 border-b border-stone-mid bg-stone-light/30 font-bold">
+              <th class="px-8 py-5">Full Name</th>
+              <th class="px-8 py-5">Email Address</th>
+              <th class="px-8 py-5">Access Level</th>
+              <th class="px-8 py-5">Account Status</th>
+              <th class="px-8 py-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody" class="text-sm divide-y divide-stone-mid/30"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Products Panel ────────────────────────────────────────── -->
+    <section class="dash-panel space-y-6" id="panel-products">
+      <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-mid">
+        <h2 class="font-display text-2xl">Master Catalog</h2>
+        <select id="product-status-filter" class="bg-stone-light rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-widest focus:outline-none">
+            <option value="">All Products</option>
+            <option value="published">Published</option>
+            <option value="draft">Drafts</option>
+        </select>
+      </div>
+      <div class="bg-white rounded-[2rem] border border-stone-mid overflow-hidden overflow-x-auto">
+        <table class="w-full text-left">
+<!-- Update this part in the Products Panel Table -->
+<thead>
+  <tr class="text-[10px] uppercase tracking-[0.2em] text-ink/30 border-b border-stone-mid bg-stone-light/30 font-bold">
+    <th class="px-8 py-5">Item Details</th>
+    <th class="px-8 py-5">Merchant</th>
+    <th class="px-8 py-5">Price</th>
+    <th class="px-8 py-5">Featured</th>
+    <th class="px-8 py-5 text-right">Visibility</th> <!-- New Column -->
+  </tr>
+</thead>
+          <tbody id="admin-products-tbody" class="text-sm divide-y divide-stone-mid/30"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Orders Panel ──────────────────────────────────────────── -->
+    <section class="dash-panel space-y-6" id="panel-orders">
+      <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-mid">
+        <h2 class="font-display text-2xl">Platform Sales</h2>
+        <select id="admin-order-status-filter" class="bg-stone-light rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-widest focus:outline-none">
+            <option value="">History</option>
+            <option value="pending">Pending</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="bg-white rounded-[2rem] border border-stone-mid overflow-hidden overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-[10px] uppercase tracking-[0.2em] text-ink/30 border-b border-stone-mid bg-stone-light/30 font-bold">
+              <th class="px-8 py-5">Order Reference</th>
+              <th class="px-8 py-5">Buyer</th>
+              <th class="px-8 py-5">Gross Amount</th>
+              <th class="px-8 py-5">Status</th>
+              <th class="px-8 py-5 text-right">Date</th>
+            </tr>
+          </thead>
+          <tbody id="admin-orders-tbody" class="text-sm divide-y divide-stone-mid/30"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── CMS & SETTINGS PANEL ─────────────────────────────────────── -->
+<section class="dash-panel space-y-6" id="panel-content">
+  <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-stone-mid">
+    <h2 class="font-display text-2xl">Website Content Management</h2>
+  </div>
+
+  <form id="cms-form" class="space-y-8">
+    
+    <!-- Hero Section Settings -->
+    <div class="bg-white rounded-[2rem] border border-stone-mid p-8">
+      <h3 class="font-display text-xl mb-6 flex items-center gap-2">
+        <ion-icon name="home-outline" class="text-accent"></ion-icon> Homepage Hero
+      </h3>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Hero Title (HTML allowed)</label>
+          <textarea name="heroTitle" rows="3" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none"></textarea>
+          <p class="text-[10px] text-ink/30 mt-1">Use &lt;br&gt; for line breaks, &lt;em&gt; for italics.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Hero Subtitle</label>
+          <textarea name="heroSubtitle" rows="3" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promo Banner Settings -->
+    <div class="bg-white rounded-[2rem] border border-stone-mid p-8">
+      <h3 class="font-display text-xl mb-6 flex items-center gap-2">
+        <ion-icon name="pricetag-outline" class="text-accent"></ion-icon> Promo Banner
+      </h3>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Banner Title</label>
+          <input type="text" name="promoTitle" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Banner Subtitle</label>
+          <input type="text" name="promoSubtitle" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none">
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Info Settings -->
+    <div class="bg-white rounded-[2rem] border border-stone-mid p-8">
+      <h3 class="font-display text-xl mb-6 flex items-center gap-2">
+        <ion-icon name="call-outline" class="text-accent"></ion-icon> Contact Information (Footer)
+      </h3>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Address</label>
+          <input type="text" name="contactAddress" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Phone</label>
+          <input type="text" name="contactPhone" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-ink/40 mb-2">Email</label>
+          <input type="email" name="contactEmail" class="w-full px-4 py-3 bg-stone-light rounded-xl text-sm border border-transparent focus:border-ink/20 focus:outline-none">
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-4">
+      <button type="button" onclick="loadCMS()" class="px-6 py-3 rounded-xl border border-stone-mid text-sm font-bold hover:bg-stone-light transition-colors">Reset</button>
+      <button type="submit" class="px-8 py-3 rounded-xl bg-accent text-white text-sm font-bold hover:bg-accent-dark shadow-lg shadow-accent/20 transition-colors">Save Changes</button>
+    </div>
+  </form>
+</section>
+
+  </div>
+</main>
+
+<script src="../assets/js/api.js"></script>
+<script>
+  /* ─── Helpers ────────────────────────────────────────────────── */
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('app-toast');
+    const msgEl = t.querySelector('.toast-message-text');
+    const icon = document.getElementById('toast-icon');
+    msgEl.textContent = msg;
+    const styles = {
+      success: ['bg-ink text-white', 'checkmark-circle-outline'],
+      error:   ['bg-red-600 text-white', 'alert-circle-outline'],
+      warning: ['bg-amber-500 text-white', 'warning-outline'],
+    };
+    const [cls, ico] = styles[type] || styles.success;
+    t.className = `fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium ${cls}`;
+    icon.name = ico;
+    t.style.opacity = '1'; t.style.transform = 'translateY(0)'; t.style.pointerEvents = 'auto';
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(1rem)'; t.style.pointerEvents = 'none'; }, 3500);
+  }
+
+  /* ─── Panel Switching ────────────────────────────────────────── */
+  function switchPanel(name) {
+    document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.dash-nav-item').forEach(a=>a.classList.remove('active'));
+    
+    document.getElementById('panel-'+name)?.classList.add('active');
+    document.querySelector(`[data-panel="${name}"]`)?.classList.add('active');
+    
+    document.getElementById('dash-page-title').textContent = name.charAt(0).toUpperCase()+name.slice(1);
+    
+    // Auto-load logic for each panel
+    if(name==='overview') loadOverview();
+    if(name==='vendors')  loadVendors();
+    if(name==='users')    loadUsers();
+    if(name==='products') loadAdminProducts();
+    if(name==='orders')   loadAdminOrders();
+    if(name==='content')  loadCMS();   // ← was missing, causing CMS to never load
+
+    // Mobile sidebar auto-close
+    document.getElementById('dash-sidebar').classList.add('-translate-x-full');
+  }
+
+  // ... existing code ...
+
+  async function loadCMS() {
+    try {
+      const res = await Admin.getContent(); // You need to add this to api.js
+      const content = res.content;
+      const form = document.getElementById('cms-form');
+      
+      // Populate form
+      if(form.heroTitle) form.heroTitle.value = content.heroTitle || '';
+      if(form.heroSubtitle) form.heroSubtitle.value = content.heroSubtitle || '';
+      if(form.promoTitle) form.promoTitle.value = content.promoTitle || '';
+      if(form.promoSubtitle) form.promoSubtitle.value = content.promoSubtitle || '';
+      if(form.contactAddress) form.contactAddress.value = content.contactAddress || '';
+      if(form.contactPhone) form.contactPhone.value = content.contactPhone || '';
+      if(form.contactEmail) form.contactEmail.value = content.contactEmail || '';
+      
+    } catch (e) {
+      showToast('Failed to load content settings', 'error');
+    }
+  }
+
+  document.getElementById('cms-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerText;
+    btn.innerText = 'Saving...';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+    const payload = {
+      heroTitle: formData.get('heroTitle'),
+      heroSubtitle: formData.get('heroSubtitle'),
+      promoTitle: formData.get('promoTitle'),
+      promoSubtitle: formData.get('promoSubtitle'),
+      contactAddress: formData.get('contactAddress'),
+      contactPhone: formData.get('contactPhone'),
+      contactEmail: formData.get('contactEmail'),
+    };
+
+    try {
+      await Admin.updateContent(payload); // You need to add this to api.js
+      showToast('Website content updated successfully!');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btn.innerText = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  /* ─── Data Loaders ───────────────────────────────────────────── */
+
+  async function loadOverview() {
+    try {
+      const { stats, recentOrders, monthlyRevenue } = await Admin.dashboard();
+      
+      /* ── Render Stats Grid ───────────────────────────────── */
+      const statItems = [
+        { label: 'Active Users', val: stats.totalUsers, icon: 'people-outline', color: 'text-blue-500' },
+        { label: 'Vendors', val: stats.totalVendors, icon: 'storefront-outline', color: 'text-emerald-500' },
+        { label: 'Inventory', val: stats.totalProducts, icon: 'cube-outline', color: 'text-purple-500' },
+        { label: 'Orders', val: stats.totalOrders, icon: 'receipt-outline', color: 'text-amber-500' },
+        { label: 'Revenue', val: '$'+Number(stats.totalRevenue).toLocaleString(), icon: 'cash-outline', color: 'text-accent' },
+        { label: 'Pending Apps', val: stats.pendingVendors, icon: 'hourglass-outline', color: 'text-red-400' },
+      ];
+
+      document.getElementById('admin-stats-grid').innerHTML = statItems.map(item => `
+        <div class="bg-white p-5 rounded-2xl border border-stone-mid flex flex-col justify-between h-full">
+            <div class="w-10 h-10 rounded-xl bg-stone-light flex items-center justify-center ${item.color} border border-stone-mid mb-4">
+                <ion-icon name="${item.icon}"></ion-icon>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-ink/30">${item.label}</p>
+                <p class="font-display text-2xl">${item.val}</p>
+            </div>
+        </div>`).join('');
+
+      /* ── Render Revenue Chart ────────────────────────────── */
+      // Avoid divide by zero by ensuring maxRev is at least 1
+      const maxRev = Math.max(...monthlyRevenue.map(m=>m.revenue), 1);
+      
+      document.getElementById('admin-revenue-chart').innerHTML = monthlyRevenue.map(m=>`
+        <div class="flex-1 flex flex-col items-center gap-3 h-full group">
+          <div class="w-full bg-stone-light rounded-t-lg relative flex items-end overflow-hidden h-full">
+            <div class="w-full bg-accent transition-all duration-700" style="height: ${Math.round((m.revenue/maxRev)*100)}%"></div>
+          </div>
+          <span class="text-[9px] font-bold uppercase tracking-widest text-ink/30">${m._id.month}/${m._id.year}</span>
+        </div>`).join('');
+
+      /* ── Render Recent Orders ─────────────────────────────── */
+      document.getElementById('admin-recent-orders').innerHTML = recentOrders.map(o=>`
+        <div class="px-8 py-5 flex items-center justify-between hover:bg-stone-light/30 transition-colors">
+          <div class="flex items-center gap-4">
+            <div class="w-2 h-2 rounded-full ${o.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-400'}"></div>
+            <div>
+              <p class="text-sm font-bold">${o.orderNumber}</p>
+              <p class="text-xs text-ink/40">${o.buyer?.name || 'Guest'}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-display text-lg">$${Number(o.totalAmount).toFixed(2)}</p>
+            <p class="text-[10px] text-ink/30 uppercase tracking-widest font-bold">${new Date(o.createdAt).toLocaleDateString()}</p>
+          </div>
+        </div>`).join('');
+
+    } catch (e) {
+      console.error(e);
+      
+      /* ── ERROR HANDLING (The Fix) ───────────────────────── */
+      // Check if the error is specifically about the user not existing
+      if (e.message === 'User not found') {
+        showToast('Session expired. Please log in again.', 'error');
+        
+        // Clear the invalid session data
+        localStorage.removeItem('anon_token');
+        localStorage.removeItem('anon_user');
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          window.location.href = '../index.html';
+        }, 1500);
+        return; // Stop execution here
+      }
+      
+      // If it's a different error, you might want to show it or log it differently
+      // showToast('Failed to load dashboard data', 'error');
+    }
+  }
+  async function loadVendors(status='') {
+    const tbody = document.getElementById('admin-vendors-tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-12 text-center text-ink/30 animate-pulse italic">Synchronizing merchant records...</td></tr>';
+    try {
+      const { vendors } = await Admin.vendors(status ? {status} : {});
+      tbody.innerHTML = vendors.map(v=>`
+        <tr class="hover:bg-stone-light/30 transition-colors">
+          <td class="px-8 py-5">
+            <div class="flex items-center gap-4">
+              <img src="${v.logo||'https://placehold.co/100'}" class="w-10 h-10 rounded-full object-cover border border-stone-mid">
+              <span class="font-bold">${v.storeName}</span>
+            </div>
+          </td>
+          <td class="px-8 py-5">
+            <p class="text-sm font-medium">${v.user?.name||'Unknown'}</p>
+            <p class="text-xs text-ink/40">${v.user?.email||'No email'}</p>
+          </td>
+          <td class="px-8 py-5">
+            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${v.status==='approved'?'bg-emerald-100 text-emerald-700':v.status==='suspended'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}">
+                ${v.status}
+            </span>
+          </td>
+          <td class="px-8 py-5 text-ink/40 text-xs">${new Date(v.createdAt).toLocaleDateString()}</td>
+          <td class="px-8 py-5 text-right space-x-1">
+            ${v.status!=='approved'?`<button class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-colors" onclick="updateVendorStatus('${v._id}','approved')">Approve</button>`:''}
+            ${v.status!=='suspended'?`<button class="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-[10px] font-bold uppercase tracking-widest hover:bg-red-50 transition-colors" onclick="updateVendorStatus('${v._id}','suspended')">Suspend</button>`:''}
+          </td>
+        </tr>`).join('') || '<tr><td colspan="5" class="px-8 py-12 text-center text-ink/40">No vendors matching criteria.</td></tr>';
+    } catch(e){ tbody.innerHTML=`<tr><td colspan="5" class="px-8 py-12 text-center text-red-500">${e.message}</td></tr>`; }
+  }
+
+  async function updateVendorStatus(id, status) {
+    try {
+      await Admin.updateVendorStatus(id, status);
+      showToast(`Merchant marked as ${status}`);
+      loadVendors(document.getElementById('vendor-status-filter').value);
+    } catch(e){showToast(e.message,'error');}
+  }
+
+  async function loadUsers(role='', search='') {
+    const tbody = document.getElementById('admin-users-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="px-8 py-12 text-center text-ink/30 animate-pulse italic">Scanning directory...</td></tr>';
+    try {
+      const { users } = await Admin.users({ role, search });
+      tbody.innerHTML = users.map(u=>`
+        <tr class="hover:bg-stone-light/30 transition-colors">
+          <td class="px-8 py-5 font-bold">${u.name}</td>
+          <td class="px-8 py-5 text-ink/60">${u.email}</td>
+          <td class="px-8 py-5">
+            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${u.role==='admin'?'bg-ink text-white':u.role==='vendor'?'bg-accent/10 text-accent':'bg-stone-mid text-ink/40'}">
+                ${u.role}
+            </span>
+          </td>
+          <td class="px-8 py-5 text-ink/40 text-xs">${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td class="px-8 py-5">
+            <span class="inline-flex items-center gap-1.5 text-xs font-medium ${u.isActive?'text-emerald-600':'text-red-500'}">
+                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                ${u.isActive?'Active':'Disabled'}
+            </span>
+          </td>
+          <td class="px-8 py-5 text-right">
+            <button class="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-all ${u.isActive?'text-red-500 hover:bg-red-50':'text-emerald-600 hover:bg-emerald-50'}"
+              onclick="toggleUserStatus('${u._id}',${!u.isActive})">
+              ${u.isActive?'Disable Access':'Grant Access'}
+            </button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="6" class="px-8 py-12 text-center text-ink/40">No members found.</td></tr>';
+    } catch(e){ tbody.innerHTML=`<tr><td colspan="6" class="px-8 py-12 text-center text-red-500">${e.message}</td></tr>`; }
+  }
+
+  async function toggleUserStatus(id, isActive) {
+    try {
+      await Admin.toggleUserStatus(id, isActive);
+      showToast('Access permissions updated');
+      loadUsers(document.getElementById('user-role-filter').value);
+    } catch(e){showToast(e.message,'error');}
+  }
+
+  async function toggleProductActive(id, val) {
+  try {
+    // We use the standard api.put because toggleFeatured is usually just a shortcut
+    // This updates the 'isActive' field which your backend orders.js checks
+    await api.put(`/admin/products/${id}/status`, { isActive: val }); 
+    showToast(val ? 'Product is now available for purchase' : 'Product hidden from store');
+    loadAdminProducts(); // Refresh list
+  } catch(e) {
+    // If your backend route is different, try this one:
+    try {
+        await api.put(`/products/${id}`, { isActive: val });
+        showToast('Status updated');
+        loadAdminProducts();
+    } catch(err) {
+        showToast(err.message, 'error');
+    }
+  }
+}
+
+async function loadAdminProducts(status='') {
+  const tbody = document.getElementById('admin-products-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" class="px-8 py-12 text-center text-ink/30 italic">Listing master catalog...</td></tr>';
+  try {
+    const { products } = await Admin.products(status ? {status} : {});
+    tbody.innerHTML = products.map(p => `
+      <tr class="hover:bg-stone-light/30 transition-colors">
+        <td class="px-8 py-5">
+          <div class="flex items-center gap-4">
+            <img src="${p.thumbnail||''}" class="w-10 h-10 rounded-lg object-cover bg-stone-light border border-stone-mid">
+            <div>
+              <span class="font-bold block">${p.name}</span>
+              <span class="text-[10px] text-ink/30 font-mono">${p._id}</span>
+            </div>
+          </div>
+        </td>
+        <td class="px-8 py-5 text-xs font-medium text-ink/60 uppercase tracking-widest">${p.vendor?.storeName||'Unknown'}</td>
+        <td class="px-8 py-5 font-display text-base">$${Number(p.price).toFixed(2)}</td>
+        
+        <!-- Featured Toggle -->
+        <td class="px-8 py-5 text-center">
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" ${p.isFeatured?'checked':''} onchange="toggleFeatured('${p._id}',this.checked)" class="sr-only peer">
+                <div class="w-9 h-5 bg-stone-mid peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
+            </label>
+        </td>
+
+        <!-- Visibility / Active Toggle (FIX FOR 500 ERROR) -->
+        <td class="px-8 py-5 text-right">
+          <button onclick="toggleProductActive('${p._id}', ${!p.isActive})" 
+            class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${p.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-red-50 hover:text-red-600' : 'bg-red-100 text-red-600 hover:bg-emerald-50 hover:text-emerald-700'}">
+            ${p.isActive ? 'Active' : 'Hidden / Inactive'}
+          </button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="5" class="px-8 py-12 text-center text-ink/40">Catalog is empty.</td></tr>';
+  } catch(e){ tbody.innerHTML=`<tr><td colspan="5" class="px-8 py-12 text-center text-red-500">${e.message}</td></tr>`; }
+}
+  async function toggleFeatured(id, val) {
+    try { await Admin.toggleFeatured(id, val); showToast('Featured status updated'); }
+    catch(e){showToast(e.message,'error');}
+  }
+
+  async function loadAdminOrders(status='') {
+    const tbody = document.getElementById('admin-orders-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="px-8 py-12 text-center text-ink/30 italic">Indexing sales data...</td></tr>';
+    try {
+      const { orders } = await Admin.orders(status ? {status} : {});
+      tbody.innerHTML = orders.map(o=>`
+        <tr class="hover:bg-stone-light/30 transition-colors">
+          <td class="px-8 py-5 font-bold text-xs">${o.orderNumber}</td>
+          <td class="px-8 py-5">
+            <p class="text-sm font-medium">${o.buyer?.name||'Guest'}</p>
+          </td>
+          <td class="px-8 py-5 font-display text-base">$${Number(o.totalAmount).toFixed(2)}</td>
+          <td class="px-8 py-5">
+            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${o.paymentStatus==='paid'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'}">
+                ${o.paymentStatus}
+            </span>
+          </td>
+          <td class="px-8 py-5 text-xs text-ink/40 italic uppercase tracking-widest font-bold">${o.status}</td>
+          <td class="px-8 py-5 text-right text-xs text-ink/30">${new Date(o.createdAt).toLocaleDateString()}</td>
+        </tr>`).join('') || '<tr><td colspan="6" class="px-8 py-12 text-center text-ink/40">No orders logged.</td></tr>';
+    } catch(e){ tbody.innerHTML=`<tr><td colspan="6" class="px-8 py-12 text-center text-red-500">${e.message}</td></tr>`; }
+  }
+
+  async function handleSendPromo(vendorId) {
+  const message = "Boost your sales! Pay $100 to feature your products on the home page for 30 days.";
+  const title = "Promote Your Products";
+  
+  try {
+    await Admin.sendNotification(vendorId, title, message);
+    showToast("Promotion sent to vendor!");
+  } catch (err) {
+    showToast("Failed to send: " + err.message, "error");
+  }
+}
+
+  /* ─── Event Listeners ────────────────────────────────────────── */
+  document.getElementById('vendor-status-filter').addEventListener('change', e=>loadVendors(e.target.value));
+  document.getElementById('user-role-filter').addEventListener('change', e=>loadUsers(e.target.value, document.getElementById('user-search').value));
+  document.getElementById('user-search').addEventListener('input', e=>loadUsers(document.getElementById('user-role-filter').value, e.target.value));
+  document.getElementById('product-status-filter').addEventListener('change', e=>loadAdminProducts(e.target.value));
+  document.getElementById('admin-order-status-filter').addEventListener('change', e=>loadAdminOrders(e.target.value));
+  document.getElementById('admin-logout-btn').addEventListener('click', e=>{e.preventDefault();Auth.logout();});
+  
+  document.getElementById('sidebar-toggle').addEventListener('click', ()=>{
+    document.getElementById('dash-sidebar').classList.toggle('-translate-x-full');
+  });
+
+  /* ─── Initialization ─────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if(!Auth.isLoggedIn()||Auth.getUser()?.role!=='admin'){window.location.href='../index.html';return;}
+    document.getElementById('admin-name-display').textContent = Auth.getUser().name;
+    switchPanel('overview');
+  });
+
+  // Global nav interaction
+  document.querySelectorAll('[data-panel]').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); switchPanel(a.dataset.panel); });
+  });
+</script>
+</body>
+</html>

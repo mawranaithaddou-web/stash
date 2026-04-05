@@ -1,0 +1,39 @@
+{
+  "apphosting": [
+    {
+      "backendId": "stash",
+      "rootDirectory": "backend",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "functions"
+      ]
+    },
+    {
+      "backendId": "stashbackend",
+      "rootDir": "backend",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    },
+    {
+      "backendId": "stashback",
+      "rootDir": "backend",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ],
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

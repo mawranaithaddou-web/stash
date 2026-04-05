@@ -1,0 +1,159 @@
+<!-- ============================================================
+  DYNAMIC ADDITIONS FOR index.html
+  Copy these blocks into your existing index.html at the spots marked.
+  ============================================================ -->
+
+<!-- 1. Add inside <head>, after your existing CSS links: -->
+<link rel="stylesheet" href="./assets/css/pages.css">
+
+
+<!-- 2. Replace the existing <header> user-actions buttons with this: -->
+<div class="header-user-actions">
+  <!-- Login button (shown when logged out) -->
+  <button class="action-btn" id="nav-login-btn" title="Login / Register">
+    <ion-icon name="person-outline"></ion-icon>
+  </button>
+
+  <!-- User menu (shown when logged in) -->
+  <div id="nav-user-menu" style="display:none;align-items:center;gap:.5rem">
+    <span class="action-btn" id="nav-user-name" style="font-size:.85rem;font-weight:600;cursor:default"></span>
+    <!-- Vendor dashboard link -->
+    <a class="action-btn nav-vendor-only" href="pages/vendor-dashboard.html" title="Vendor Dashboard" style="display:none">
+      <ion-icon name="storefront-outline"></ion-icon>
+    </a>
+    <!-- Admin dashboard link -->
+    <a class="action-btn nav-admin-only" href="pages/admin-dashboard.html" title="Admin Dashboard" style="display:none">
+      <ion-icon name="settings-outline"></ion-icon>
+    </a>
+    <!-- Profile link for buyers -->
+    <a class="action-btn" href="pages/account.html" title="My Account">
+      <ion-icon name="person-circle-outline"></ion-icon>
+    </a>
+    <button class="action-btn" id="nav-logout-btn" title="Logout">
+      <ion-icon name="log-out-outline"></ion-icon>
+    </button>
+  </div>
+
+  <button class="action-btn" id="wishlist-icon-btn" title="Wishlist">
+    <ion-icon name="heart-outline"></ion-icon>
+    <span class="count">0</span>
+  </button>
+
+  <button class="action-btn" id="cart-icon-btn" title="Cart">
+    <ion-icon name="bag-handle-outline"></ion-icon>
+    <span class="count" data-cart-count>0</span>
+  </button>
+</div>
+
+
+<!-- 3. Update the search form to add IDs: -->
+<div class="header-search-container">
+  <form id="search-form" style="display:contents">
+    <input type="search" name="search" id="search-input" class="search-field" placeholder="Enter your product name...">
+    <button type="submit" class="search-btn">
+      <ion-icon name="search-outline"></ion-icon>
+    </button>
+  </form>
+</div>
+
+
+<!-- 4. Add IDs to product grid sections in the page body.
+        Find the sections and add these IDs to their product containers.
+        e.g. the "Featured" product list → id="featured-products-grid"
+             the "New Arrivals" list     → id="new-arrivals-grid"
+             the "Top Rated" list        → id="top-rated-grid"
+        Each container should start empty (or keep a loading placeholder):  -->
+<div class="product-showcase-grid" id="featured-products-grid">
+  <div style="padding:2rem;text-align:center;color:#aaa">Loading featured products…</div>
+</div>
+
+
+<!-- 5. Add the newsletter form action. In the existing newsletter form add: -->
+<!--    The app.js handleNewsletterSubmit listener handles it automatically  -->
+<!--    No changes needed to the newsletter HTML — it binds by form selector -->
+
+
+<!-- 6. Paste these blocks just before </body> (after existing scripts):
+     ─────────────────────────────────────────────────────────────────── -->
+
+<!-- Auth Modal -->
+<div id="auth-modal">
+  <div id="auth-modal-overlay"></div>
+  <div class="auth-modal-box">
+    <button class="auth-modal-close" id="auth-modal-close">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+    <div class="auth-modal-logo">Anon</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Log In</button>
+      <button class="auth-tab" data-tab="register">Register</button>
+    </div>
+
+    <!-- Login form -->
+    <form class="auth-form active" data-form="login" id="login-form">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" required placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="Your password">
+      </div>
+      <button type="submit" class="btn-primary">Log In</button>
+      <p class="auth-switch">Don't have an account? <a onclick="switchAuthTab('register')">Register</a></p>
+    </form>
+
+    <!-- Register form -->
+    <form class="auth-form" data-form="register" id="register-form">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="fullname" required placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" required placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="Min. 6 characters" minlength="6">
+      </div>
+      <div class="form-group">
+        <label>I want to…</label>
+        <select name="role">
+          <option value="buyer">Shop (Buyer)</option>
+          <option value="vendor">Sell Products (Vendor)</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Create Account</button>
+      <p class="auth-switch">Already have an account? <a onclick="switchAuthTab('login')">Log In</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- Cart Sidebar -->
+<div id="cart-overlay" class="cart-overlay"></div>
+<div id="cart-sidebar" class="cart-sidebar">
+  <div class="cart-sidebar-header">
+    <h3>Shopping Cart</h3>
+    <button id="cart-sidebar-close"><ion-icon name="close-outline"></ion-icon></button>
+  </div>
+  <div id="cart-sidebar-body" class="cart-sidebar-body"></div>
+  <div class="cart-sidebar-footer">
+    <div class="cart-total-row">
+      <span>Subtotal</span>
+      <strong id="cart-sidebar-total">$0.00</strong>
+    </div>
+    <button class="btn btn-primary full-width" id="cart-checkout-btn">
+      Proceed to Checkout
+    </button>
+  </div>
+</div>
+
+<!-- App Toast -->
+<div id="app-toast" class="app-toast">
+  <span class="toast-message-text"></span>
+</div>
+
+<!-- 7. Scripts — replace existing <script src="./assets/js/script.js"> with: -->
+<script src="./assets/js/api.js"></script>
+<script src="./assets/js/app.js"></script>
