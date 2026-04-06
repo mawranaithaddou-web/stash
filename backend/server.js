@@ -61,15 +61,30 @@ app.use('/api/newsletter', require('./routes/newsletter'));
 app.use('/api/delivery',   require('./routes/delivery'));
 app.use('/api/content',    require('./routes/content'));
 
-// 6. Serve Static Files (Vanilla JS Frontend)
-// This points to the /public folder in your project root
-const publicPath = path.join(__dirname, '../public');
+
+// Use resolve to ensure we are getting the absolute path from the container root
+const publicPath = path.resolve(__dirname, '..', 'public');
+
+console.log("Looking for frontend at:", publicPath); // This will show up in Firebase Logs
+
+app.use(express.json());
 app.use(express.static(publicPath));
 
-// 7. SPA Routing (Send everything else to index.html)
 app.get('*', (req, res) => {
+  // Only serve index.html if it's NOT an API call
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(publicPath, 'index.html'));
+    const indexPath = path.join(publicPath, 'index.html');
+    
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        // Detailed error for debugging (Remove this in final production)
+        res.status(404).json({
+          success: false,
+          message: `Frontend not found. Tried: ${indexPath}`,
+          dirName: __dirname
+        });
+      }
+    });
   }
 });
 
