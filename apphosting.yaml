@@ -1,24 +1,9 @@
-# Settings for Backend (on Cloud Run).
-# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
 runConfig:
   minInstances: 0
-  # maxInstances: 100
-  # concurrency: 80
-  # cpu: 1
-  # memoryMiB: 512
 
-# Environment variables and secrets.
-# env:
-  # Configure environment variables.
-  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
-  # - variable: MESSAGE
-  #   value: Hello world!
-  #   availability:
-  #     - BUILD
-  #     - RUNTIME
-
-  # Grant access to secrets in Cloud Secret Manager.
-  # You can create secrets with the CLI command `firebase apphosting:secrets:set <secretName>`.
-  # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
-  # - variable: MY_SECRET
-  #   secret: mySecretRef
+env:
+  - variable: MONGO_URI
+    value: "mongodb://mawranaithaddou_db_user:U9nANh4IToDqJj29@ac-hxz457f-shard-00-00.x84sw5w.mongodb.net:27017,ac-hxz457f-shard-00-01.x84sw5w.mongodb.net:27017,ac-hxz457f-shard-00-02.x84sw5w.mongodb.net:27017/?ssl=true&replicaSet=atlas-c7czjw-shard-0&authSource=admin&appName=Cluster0"
+    availability:
+      - BUILD
+      - RUNTIME

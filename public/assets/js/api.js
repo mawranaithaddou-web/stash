@@ -2,9 +2,9 @@
 
 // 1. Define the base request logic FIRST
 // api.js
-const API_BASE = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000/api' 
-  : 'https://stash.europe-west4.run.app/api'; // Replace with your actual App Hosting URL
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8080/api' 
+  : '/api'; // On Firebase, this automatically points to your backend service
 const getToken = () => localStorage.getItem('anon_token');
 
 const headers = (extra = {}) => ({
@@ -48,10 +48,10 @@ const Delivery = {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 const Auth = {
-  register: (data)   => api.post('/auth/register', data),
-  login:    (data)   => api.post('/auth/login', data),
-  me:       ()       => api.get('/auth/me'),
-  updatePassword: (data) => api.put('/auth/updatepassword', data),
+  register: (data)   => api.post('../auth/register', data),
+  login:    (data)   => api.post('../auth/login', data),
+  me:       ()       => api.get('../auth/me'),
+  updatePassword: (data) => api.put('../auth/updatepassword', data),
   logout: () => {
     localStorage.removeItem('anon_token');
     localStorage.removeItem('anon_user');

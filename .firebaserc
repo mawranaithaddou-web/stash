@@ -1,6 +1,8 @@
 {
   "projects": {
-    "default": "vintage-shop-35421"
+    "default": "vintage-shop-35421",
+    "stst": "stash-afbfc",
+    "stash": "vintage-shop-35421"
   },
   "targets": {
     "vintage-shop-35421": {

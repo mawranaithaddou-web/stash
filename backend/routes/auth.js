@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+global.appRoot = path.join(__dirname, '');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const Vendor = require('../models/Vendor');
